@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/polish-logo.png" alt="Polish logo: a shining navy leather boot with a gold sparkle" width="160" height="160">
+  <img src="https://raw.githubusercontent.com/lotusbaba/polish-lang/main/assets/polish-logo.png" alt="Polish logo: a shining navy leather boot with a gold sparkle" width="160" height="160">
 </p>
 
 # Polish

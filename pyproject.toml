@@ -1,20 +1,29 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "polish-lang"
 version = "0.7.0"
 description = "An executable architecture specification language"
-license = {file = "LICENSE"}
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = ["lark>=1.2,<2"]
+
+[project.urls]
+Repository = "https://github.com/lotusbaba/polish-lang"
+Issues = "https://github.com/lotusbaba/polish-lang/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
 
 [project.scripts]
 polish = "polish.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["polish", "polish.*"]
 
 [tool.setuptools.package-data]
 polish = ["grammar.lark", "config/*.json", "config/vendors/*/*.json"]

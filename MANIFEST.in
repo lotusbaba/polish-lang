@@ -1,0 +1,4 @@
+include LICENSE README.md
+recursive-include examples *.polishd
+recursive-include tests *.py
+recursive-include assets *.png
