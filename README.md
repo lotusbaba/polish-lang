@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/polish-logo.png" alt="Polish logo: a shining navy leather boot with a gold sparkle" width="160" height="160">
+</p>
+
 # Polish
 
 Polish is a declarative architecture language for people and LLMs. Describe
@@ -1049,3 +1053,7 @@ of HTTP `rate_rps`. It requires `max_pulls_rps`; demands from distinct executed
 services using the same registry are summed. These checks represent a deployment
 precondition, not a fresh pull per application request. IAM evaluation, image
 layers/tags, network transfer time, and registry storage capacity are not modeled.
+
+## License
+
+Polish is licensed under the [MIT License](LICENSE).

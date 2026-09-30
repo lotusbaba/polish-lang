@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "polish-lang"
 version = "0.7.0"
 description = "An executable architecture specification language"
+license = {file = "LICENSE"}
 requires-python = ">=3.11"
 dependencies = ["lark>=1.2,<2"]
 
