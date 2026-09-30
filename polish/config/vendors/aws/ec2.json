@@ -1,0 +1,19 @@
+{
+  "source": "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+  "verified_on": "2026-09-29",
+  "instances": {
+    "m7i.large": {
+      "vcpus": 2,
+      "memory_gib": 8
+    },
+    "m7i.xlarge": {
+      "vcpus": 4,
+      "memory_gib": 16
+    },
+    "m7i.2xlarge": {
+      "vcpus": 8,
+      "memory_gib": 32
+    }
+  },
+  "instance_family": "ec2"
+}

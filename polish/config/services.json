@@ -1,0 +1,27 @@
+{
+  "components": {
+    "service": {
+      "properties": [
+        "tls",
+        "cpu_ms",
+        "base_memory_mib",
+        "memory_per_request_mib",
+        "duration_ms",
+        "connection_pool_size"
+      ],
+      "parents": []
+    },
+    "operation": {
+      "properties": [
+        "method",
+        "path",
+        "cpu_ms",
+        "memory_per_request_mib",
+        "duration_ms"
+      ],
+      "parents": [
+        "service"
+      ]
+    }
+  }
+}

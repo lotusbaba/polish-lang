@@ -1,0 +1,26 @@
+{
+  "products": {
+    "gateway": {
+      "component": "gateway",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      },
+      "host_required": true
+    }
+  },
+  "sources": [
+    "https://developer.konghq.com/gateway/rate-limiting/"
+  ],
+  "verified_on": "2026-09-29"
+}

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "polish-lang"
+version = "0.7.0"
+description = "An executable architecture specification language"
+requires-python = ">=3.11"
+dependencies = ["lark>=1.2,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+polish = "polish.cli:main"
+
+[tool.setuptools.package-data]
+polish = ["grammar.lark", "config/*.json", "config/vendors/*/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

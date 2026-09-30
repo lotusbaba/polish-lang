@@ -1,0 +1,11 @@
+// Expected: E_LOAD_COUNT. A server-rendered site must select one source.
+architecture InvalidLoading {
+  frontend Site {
+    rendering = server
+    loaded_from Balancer
+    loaded_from Renderer
+  }
+  load_balancer Balancer { routes_to Renderer }
+  service Renderer { hosted_on Servers }
+  compute_pool Servers { instances = 1..3 }
+}

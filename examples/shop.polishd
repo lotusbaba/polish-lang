@@ -1,0 +1,191 @@
+architecture Shop {
+  role Customer
+  role Admin
+
+  artifact_store WebAssets {
+    kind = object_store
+    tls = true
+  }
+
+  frontend Storefront {
+    rendering = static
+    loaded_from WebAssets
+
+    page Landing
+    page Product
+    page Cart
+    page Checkout { requires authenticated }
+    page Account { requires authenticated }
+    page AdminPanel { requires role Admin }
+
+    Landing navigates_to Product
+    Product navigates_to Cart
+    Cart navigates_to Checkout
+    Landing navigates_to Account
+    Landing navigates_to AdminPanel
+    Product invokes Catalog.get_product
+    Checkout invokes Orders.place_order
+  }
+
+  service Catalog {
+    hosted_on AppPool
+    operation get_product {
+      method = GET
+      path = "/api/products/*"
+      reads Products.Items
+    }
+  }
+
+  service Orders {
+    hosted_on AppPool
+    operation place_order {
+      requires authenticated
+      method = POST
+      path = "/api/orders"
+      invokes Catalog.get_product
+      writes Products.Purchases
+    }
+  }
+
+  database Products {
+    kind = relational
+    read_replicas = 2
+    hosted_on DatabaseCluster
+    table Items {
+      id: uuid primary_key
+      name: string
+      price: decimal
+    }
+    table Purchases {
+      id: uuid primary_key
+      item_id: uuid
+    }
+  }
+
+  database Sessions {
+    kind = key_value
+    partitions = managed
+    hosted_on SessionCluster
+  }
+
+  cdn Edge {
+    tls_termination = true
+    request_collapsing = true
+    bot_mitigation = true
+    shielding = true
+    rate_limiting = true
+    route "/assets/*" to WebAssets
+    route "/api/*" to ApiGateway
+  }
+  gateway ApiGateway { routes_to AppBalancer }
+  load_balancer AppBalancer { routes_to AppPool }
+  compute_pool AppPool { instances = 2..10 }
+  database_cluster DatabaseCluster {
+    engine = postgres
+    replicas = 2
+  }
+  database_cluster SessionCluster {
+    engine = managed_kv
+    partitions = managed
+  }
+}
+
+scenario "Customer retrieves a product" {
+  request {
+    entry = Edge
+    protocol = https
+    actor = Customer
+    method = GET
+    path = "/api/products/123"
+  }
+  expect {
+    outcome = success
+    reaches Catalog.get_product
+    accesses Products.Items
+  }
+}
+
+scenario "Customer places an order" {
+  request {
+    entry = Edge
+    protocol = https
+    actor = Customer
+    authenticated = true
+    method = POST
+    path = "/api/orders"
+  }
+  expect {
+    outcome = success
+    reaches Orders.place_order
+    reaches Catalog.get_product
+    accesses Products.Purchases
+  }
+}
+
+scenario "Anonymous checkout is denied" {
+  request {
+    entry = Edge
+    protocol = https
+    method = POST
+    path = "/api/orders"
+  }
+  expect { outcome = denied error = ACCESS_DENIED }
+}
+
+scenario "Customer navigates to checkout" {
+  request {
+    entry = Storefront.Landing
+    destination = Storefront.Checkout
+    actor = Customer
+    authenticated = true
+  }
+  expect { outcome = success reaches Storefront.Checkout }
+}
+
+scenario "Customer cannot open admin" {
+  request {
+    entry = Storefront.Landing
+    destination = Storefront.AdminPanel
+    actor = Customer
+    authenticated = true
+  }
+  expect { outcome = denied error = ACCESS_DENIED }
+}
+
+scenario "Admin can open admin" {
+  request {
+    entry = Storefront.Landing
+    destination = Storefront.AdminPanel
+    actor = Admin
+    authenticated = true
+  }
+  expect { outcome = success reaches Storefront.AdminPanel }
+}
+
+scenario "HTTPS cannot bypass the TLS edge" {
+  request { entry = ApiGateway protocol = https path = "/api/products/123" }
+  expect { outcome = error error = TLS_UNSUPPORTED }
+}
+
+scenario "Static assets load" {
+  request { entry = Edge protocol = https path = "/assets/app.js" }
+  expect { outcome = success reaches WebAssets }
+}
+
+scenario "Product page calls the API end to end" {
+  request {
+    entry = Storefront.Product
+    action = Catalog.get_product
+    via = Edge
+    protocol = https
+    method = GET
+    path = "/api/products/123"
+  }
+  expect {
+    outcome = success
+    reaches WebAssets
+    reaches ApiGateway
+    reaches Catalog.get_product
+    accesses Products.Items
+  }
+}

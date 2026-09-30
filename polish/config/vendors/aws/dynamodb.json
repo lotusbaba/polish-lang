@@ -1,0 +1,53 @@
+{
+  "source": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Constraints.html",
+  "verified_on": "2026-09-29",
+  "products": {
+    "dynamodb": {
+      "component": "database_cluster",
+      "database_kinds": [
+        "key_value",
+        "document"
+      ],
+      "defaults": {
+        "tls": true,
+        "storage": "persistent"
+      },
+      "required": [
+        "capacity_mode"
+      ],
+      "properties": [
+        "capacity_mode",
+        "read_capacity_units",
+        "write_capacity_units",
+        "max_read_units",
+        "max_write_units"
+      ],
+      "forbidden": [
+        "instance_type",
+        "instances",
+        "engine",
+        "replicas",
+        "copies",
+        "cpu_utilization",
+        "partitions",
+        "failure_domains"
+      ],
+      "database_forbidden": [
+        "read_replicas",
+        "replication_factor",
+        "replication",
+        "write_ack",
+        "max_connections",
+        "reserved_connections",
+        "failure_domains"
+      ],
+      "protocols": [
+        "https"
+      ],
+      "read_chunk_bytes": 4096,
+      "write_chunk_bytes": 1024,
+      "max_item_bytes": 409600,
+      "eventual_read_factor": 0.5
+    }
+  }
+}

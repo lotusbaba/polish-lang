@@ -1,0 +1,59 @@
+{
+  "components": {
+    "compute_pool": {
+      "properties": [
+        "instances",
+        "tls",
+        "provider",
+        "instance_type",
+        "cpu_utilization",
+        "memory_utilization",
+        "vcpus",
+        "memory_gib"
+      ],
+      "parents": []
+    },
+    "database_cluster": {
+      "properties": [
+        "copies",
+        "engine",
+        "failure_domains",
+        "partitions",
+        "replicas",
+        "storage",
+        "tls",
+        "provider",
+        "instance_type",
+        "cpu_utilization",
+        "product"
+      ],
+      "parents": []
+    },
+    "stream": {
+      "properties": [
+        "provider",
+        "product"
+      ],
+      "parents": []
+    },
+    "queue": {
+      "properties": [
+        "provider",
+        "product"
+      ],
+      "parents": []
+    },
+    "batch_cluster": {
+      "properties": [
+        "provider",
+        "product"
+      ],
+      "parents": []
+    }
+  },
+  "hosting": {
+    "service": "compute_pool",
+    "cache": "compute_pool",
+    "database": "database_cluster"
+  }
+}

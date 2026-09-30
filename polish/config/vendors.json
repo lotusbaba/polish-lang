@@ -1,0 +1,29 @@
+{
+  "vendors": {
+    "aws": [
+      "ec2.json",
+      "rds.json",
+      "dynamodb.json",
+      "elb.json",
+      "elasticache.json",
+      "databases.json",
+      "apigateway.json",
+      "messaging.json",
+      "delivery.json"
+    ],
+    "self_hosted": [
+      "caches.json",
+      "databases.json",
+      "graphql.json"
+    ],
+    "kong": [
+      "gateway.json"
+    ],
+    "fastly": [
+      "edge.json"
+    ],
+    "cloudflare": [
+      "edge.json"
+    ]
+  }
+}

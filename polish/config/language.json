@@ -1,0 +1,52 @@
+{
+  "network": [
+    "cache",
+    "cdn",
+    "gateway",
+    "load_balancer"
+  ],
+  "booleans": [
+    "backups",
+    "bot_mitigation",
+    "rate_limiting",
+    "request_collapsing",
+    "shielding",
+    "tls",
+    "tls_termination"
+  ],
+  "methods": [
+    "DELETE",
+    "GET",
+    "HEAD",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT"
+  ],
+  "field_types": [
+    "uuid",
+    "string",
+    "decimal",
+    "integer",
+    "boolean",
+    "datetime",
+    "json"
+  ],
+  "nonnegative_integers": [
+    "read_replicas",
+    "replicas",
+    "ttl"
+  ],
+  "enums": {
+    "rendering": [
+      "static",
+      "server"
+    ],
+    "upstream_protocol": [
+      "http",
+      "https",
+      "tcp",
+      "tls"
+    ]
+  }
+}

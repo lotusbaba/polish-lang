@@ -1,0 +1,57 @@
+architecture Processing {
+  compute_pool Apps { provider = aws instance_type = "m7i.large" instances = 2 }
+  service Worker {
+    hosted_on Apps
+    operation ingest {
+      method = POST path = "/ingest" cpu_ms = 1
+      publishes_to Events
+      publishes_to Jobs
+    }
+    operation consume {
+      method = POST path = "/consume" cpu_ms = 1
+      consumes_from Jobs
+    }
+    operation analyze {
+      method = POST path = "/analyze" cpu_ms = 1
+      submits_to Analytics { job_cpu_ms = 1000 }
+    }
+  }
+  stream Events {
+    provider = aws product = msk
+    brokers = 3 partitions = 6 replication_factor = 3
+    max_messages_rps = 100 consumer_rate_rps = 80 max_backlog = 1000
+  }
+  queue Jobs {
+    provider = aws product = sqs queue_type = standard
+    visibility_timeout_seconds = 30 retention_seconds = 86400
+    max_messages_rps = 100 consumer_rate_rps = 5 max_backlog = 20
+  }
+  batch_cluster Analytics {
+    provider = aws product = emr framework = spark
+    workers = 2 worker_vcpus = 2 cpu_utilization = 0.7
+  }
+}
+scenario "MSK and SQS keep up" {
+  request { entry = Worker protocol = http method = POST path = "/ingest" rate_rps = 5 window_seconds = 10 }
+  expect { outcome = success reaches Events reaches Jobs }
+}
+scenario "SQS backlog grows beyond budget" {
+  request { entry = Worker protocol = http method = POST path = "/ingest" rate_rps = 10 window_seconds = 5 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "MSK ingress exceeds declared throughput" {
+  request { entry = Worker protocol = http method = POST path = "/ingest" rate_rps = 101 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "SQS consumption rate fits" {
+  request { entry = Worker protocol = http method = POST path = "/consume" rate_rps = 10 }
+  expect { outcome = success reaches Jobs }
+}
+scenario "EMR CPU budget fits" {
+  request { entry = Worker protocol = http method = POST path = "/analyze" rate_rps = 2 }
+  expect { outcome = success reaches Analytics }
+}
+scenario "EMR needs more workers" {
+  request { entry = Worker protocol = http method = POST path = "/analyze" rate_rps = 3 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}

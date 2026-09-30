@@ -1,0 +1,38 @@
+{
+  "source": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.Summary.html",
+  "verified_on": "2026-09-29",
+  "instance_family": "rds",
+  "instances": {
+    "db.m7i.large": {
+      "vcpus": 2,
+      "memory_gib": 8
+    },
+    "db.m7i.xlarge": {
+      "vcpus": 4,
+      "memory_gib": 16
+    }
+  },
+  "products": {
+    "rds_postgres": {
+      "component": "database_cluster",
+      "database_kinds": [
+        "relational"
+      ],
+      "defaults": {
+        "engine": "postgres",
+        "storage": "persistent",
+        "tls": true
+      },
+      "required": [
+        "instance_type"
+      ],
+      "properties": [
+        "multi_az"
+      ],
+      "forbidden": [
+        "partitions"
+      ],
+      "instance_family": "rds"
+    }
+  }
+}

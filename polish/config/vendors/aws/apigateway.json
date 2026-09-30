@@ -1,0 +1,25 @@
+{
+  "products": {
+    "api_gateway": {
+      "component": "gateway",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    }
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-throttling.html"
+  ],
+  "verified_on": "2026-09-29"
+}

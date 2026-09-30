@@ -1,0 +1,99 @@
+{
+  "products": {
+    "msk": {
+      "component": "stream",
+      "defaults": {
+        "engine": "kafka",
+        "tls": true
+      },
+      "required": [
+        "brokers",
+        "partitions",
+        "replication_factor"
+      ],
+      "properties": [
+        "engine",
+        "brokers",
+        "partitions",
+        "replication_factor",
+        "tls",
+        "max_backlog",
+        "consumer_rate_rps",
+        "max_messages_rps"
+      ],
+      "property_types": {
+        "brokers": "positive_integer",
+        "partitions": "positive_integer",
+        "replication_factor": "positive_integer",
+        "max_backlog": "nonnegative_integer",
+        "consumer_rate_rps": "nonnegative",
+        "max_messages_rps": "positive"
+      }
+    },
+    "sqs": {
+      "component": "queue",
+      "defaults": {
+        "tls": true
+      },
+      "required": [
+        "queue_type"
+      ],
+      "properties": [
+        "queue_type",
+        "visibility_timeout_seconds",
+        "retention_seconds",
+        "tls",
+        "max_backlog",
+        "consumer_rate_rps",
+        "max_messages_rps"
+      ],
+      "enums": {
+        "queue_type": [
+          "standard",
+          "fifo"
+        ]
+      },
+      "property_types": {
+        "visibility_timeout_seconds": "nonnegative_integer",
+        "retention_seconds": "positive_integer",
+        "max_backlog": "nonnegative_integer",
+        "consumer_rate_rps": "nonnegative",
+        "max_messages_rps": "positive"
+      }
+    },
+    "emr": {
+      "component": "batch_cluster",
+      "defaults": {
+        "tls": true
+      },
+      "required": [
+        "workers",
+        "framework"
+      ],
+      "properties": [
+        "workers",
+        "framework",
+        "worker_vcpus",
+        "cpu_utilization",
+        "tls"
+      ],
+      "enums": {
+        "framework": [
+          "spark",
+          "hadoop"
+        ]
+      },
+      "property_types": {
+        "workers": "positive_integer",
+        "worker_vcpus": "positive_integer",
+        "cpu_utilization": "positive"
+      }
+    }
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html",
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html",
+    "https://docs.aws.amazon.com/emr/latest/ManagementGuide/"
+  ],
+  "verified_on": "2026-09-29"
+}

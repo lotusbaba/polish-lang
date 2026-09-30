@@ -1,0 +1,81 @@
+{
+  "products": {
+    "cloudfront": {
+      "component": "cdn",
+      "defaults": {
+        "tls": true,
+        "tls_termination": true,
+        "upstream_protocol": "https"
+      },
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    },
+    "s3": {
+      "component": "artifact_store",
+      "defaults": {
+        "kind": "object_store",
+        "endpoint": "rest",
+        "tls": true
+      },
+      "required": [],
+      "properties": [
+        "endpoint",
+        "max_requests_rps"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "enums": {
+        "endpoint": [
+          "rest",
+          "website"
+        ],
+        "kind": [
+          "object_store"
+        ]
+      },
+      "property_types": {
+        "max_requests_rps": "positive"
+      }
+    },
+    "ecr": {
+      "component": "artifact_store",
+      "defaults": {
+        "kind": "container_registry",
+        "tls": true
+      },
+      "required": [],
+      "properties": [
+        "max_pulls_rps"
+      ],
+      "protocols": [
+        "https"
+      ],
+      "enums": {
+        "kind": [
+          "container_registry"
+        ]
+      },
+      "property_types": {
+        "max_pulls_rps": "positive"
+      }
+    }
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteEndpoints.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistValuesOrigin.html"
+  ]
+}

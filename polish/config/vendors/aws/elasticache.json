@@ -1,0 +1,62 @@
+{
+  "products": {
+    "elasticache_redis": {
+      "component": "cache",
+      "defaults": {
+        "engine": "redis"
+      },
+      "required": [
+        "capacity_mib"
+      ],
+      "properties": [
+        "engine",
+        "capacity_mib",
+        "dataset_mib",
+        "ttl",
+        "max_ops_rps"
+      ],
+      "managed": true,
+      "protocols": [
+        "tcp",
+        "tls"
+      ],
+      "host_required": false,
+      "property_types": {
+        "capacity_mib": "positive",
+        "dataset_mib": "nonnegative",
+        "max_ops_rps": "positive"
+      }
+    },
+    "elasticache_memcached": {
+      "component": "cache",
+      "defaults": {
+        "engine": "memcached"
+      },
+      "required": [
+        "capacity_mib"
+      ],
+      "properties": [
+        "engine",
+        "capacity_mib",
+        "dataset_mib",
+        "ttl",
+        "max_ops_rps"
+      ],
+      "managed": true,
+      "protocols": [
+        "tcp",
+        "tls"
+      ],
+      "host_required": false,
+      "property_types": {
+        "capacity_mib": "positive",
+        "dataset_mib": "nonnegative",
+        "max_ops_rps": "positive"
+      }
+    }
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/SelectEngine.html"
+  ],
+  "verified_on": "2026-09-29"
+}

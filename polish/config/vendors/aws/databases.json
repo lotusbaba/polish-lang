@@ -1,0 +1,55 @@
+{
+  "products": {
+    "cockroachdb": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "cockroachdb",
+        "storage": "persistent",
+        "tls": true
+      },
+      "required": [
+        "nodes"
+      ],
+      "properties": [
+        "nodes",
+        "max_ops_rps"
+      ],
+      "database_kinds": [
+        "relational"
+      ],
+      "property_types": {
+        "nodes": "positive_integer",
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations"
+    },
+    "mongodb": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "mongodb",
+        "storage": "persistent",
+        "tls": true
+      },
+      "required": [
+        "nodes"
+      ],
+      "properties": [
+        "nodes",
+        "max_ops_rps"
+      ],
+      "database_kinds": [
+        "document"
+      ],
+      "property_types": {
+        "nodes": "positive_integer",
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations"
+    }
+  },
+  "sources": [
+    "https://www.cockroachlabs.com/docs/stable/deploy-cockroachdb-on-aws",
+    "https://www.mongodb.com/docs/manual/administration/install-on-linux/"
+  ],
+  "verified_on": "2026-09-29"
+}

@@ -1,0 +1,28 @@
+{
+  "products": {
+    "cdn": {
+      "component": "cdn",
+      "defaults": {
+        "tls": true,
+        "tls_termination": true,
+        "upstream_protocol": "https"
+      },
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    }
+  },
+  "sources": [
+    "https://developers.cloudflare.com/cache/concepts/default-cache-behavior/"
+  ]
+}

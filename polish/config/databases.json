@@ -1,0 +1,100 @@
+{
+  "components": {
+    "database": {
+      "properties": [
+        "backup_retention_days",
+        "backups",
+        "durability",
+        "failure_domains",
+        "kind",
+        "partitions",
+        "read_replicas",
+        "replication",
+        "replication_factor",
+        "tls",
+        "write_ack",
+        "max_connections",
+        "reserved_connections"
+      ],
+      "parents": []
+    },
+    "table": {
+      "properties": [],
+      "parents": [
+        "database"
+      ]
+    },
+    "document": {
+      "properties": [],
+      "parents": [
+        "database"
+      ]
+    },
+    "collection": {
+      "properties": [],
+      "parents": [
+        "database"
+      ]
+    },
+    "keyspace": {
+      "properties": [
+        "key_type",
+        "value_type"
+      ],
+      "parents": [
+        "database"
+      ]
+    }
+  },
+  "database_kinds": {
+    "relational": [
+      "table"
+    ],
+    "document": [
+      "document",
+      "collection"
+    ],
+    "key_value": [
+      "keyspace"
+    ]
+  },
+  "storage_enums": {
+    "durability": [
+      "memory",
+      "disk",
+      "replicated"
+    ],
+    "replication": [
+      "synchronous",
+      "asynchronous"
+    ],
+    "write_ack": [
+      "primary",
+      "quorum",
+      "all"
+    ],
+    "storage": [
+      "persistent",
+      "ephemeral"
+    ],
+    "key_type": [
+      "string",
+      "integer",
+      "uuid"
+    ],
+    "value_type": [
+      "string",
+      "integer",
+      "decimal",
+      "boolean",
+      "json",
+      "bytes"
+    ]
+  },
+  "positive_integers": [
+    "replication_factor",
+    "failure_domains",
+    "copies",
+    "backup_retention_days"
+  ]
+}

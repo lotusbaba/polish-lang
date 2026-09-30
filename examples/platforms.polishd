@@ -1,0 +1,99 @@
+architecture Platforms {
+  cdn Edge {
+    provider = fastly product = cdn
+    tls_termination = true
+    limit_rps = 1000 burst_limit = 200
+    routes_to Waf
+  }
+  gateway Waf {
+    provider = fastly product = signal_sciences
+    limit_rps = 800
+    routes_to AwsGateway
+  }
+  gateway AwsGateway {
+    provider = aws product = api_gateway
+    limit_rps = 500 burst_limit = 100
+    routes_to Kong
+  }
+  gateway Kong {
+    provider = kong product = gateway
+    hosted_on Local
+    limit_rps = 400
+    routes_to Graph
+  }
+  gateway Graph {
+    provider = self_hosted product = graphql
+    hosted_on Local
+    max_query_depth = 8 max_query_cost = 100
+    routes_to Apps
+  }
+  compute_pool Local { provider = self_hosted vcpus = 4 memory_gib = 16 instances = 2 }
+  compute_pool Apps { provider = aws instance_type = "m7i.large" instances = 2 }
+  service API {
+    hosted_on Apps
+    operation query {
+      method = POST path = "/graphql" cpu_ms = 1
+      reads Redis
+    }
+    operation backend {
+      cpu_ms = 2
+      reads Accounts.Users { protocol = tls }
+      reads Catalog.Products { protocol = tls }
+    }
+    operation memcached {
+      method = GET path = "/memcached" cpu_ms = 1
+      reads Memcached
+    }
+  }
+  cache Redis {
+    provider = self_hosted product = redis
+    hosted_on Local
+    capacity_mib = 512 dataset_mib = 100 max_ops_rps = 1000
+    invokes API.backend
+  }
+  cache Memcached {
+    provider = aws product = elasticache_memcached
+    capacity_mib = 512 dataset_mib = 100 max_ops_rps = 1000
+    invokes API.backend
+  }
+  database Accounts {
+    kind = relational
+    hosted_on Cockroach
+    table Users { id: uuid primary_key }
+  }
+  database_cluster Cockroach {
+    provider = aws product = cockroachdb nodes = 3 max_ops_rps = 200
+  }
+  database Catalog {
+    kind = document
+    hosted_on Mongo
+    collection Products { id: uuid primary_key }
+  }
+  database_cluster Mongo {
+    provider = self_hosted product = mongodb nodes = 3 max_ops_rps = 100
+  }
+}
+scenario "Cache hit traverses Fastly AWS Kong and GraphQL" {
+  request { entry = Edge protocol = https method = POST path = "/graphql" cache_result = hit query_depth = 3 query_cost = 20 rate_rps = 50 }
+  expect { outcome = success accesses Redis }
+}
+scenario "Cache miss calls Mongo and Cockroach" {
+  request { entry = Edge protocol = https method = POST path = "/graphql" cache_result = miss query_depth = 3 query_cost = 20 rate_rps = 50 }
+  expect { outcome = success accesses Accounts.Users accesses Catalog.Products }
+}
+scenario "AWS API gateway rate limit rejects load" {
+  request { entry = AwsGateway protocol = http method = POST path = "/graphql" query_depth = 3 query_cost = 20 rate_rps = 501 }
+  expect { outcome = denied error = RATE_LIMITED }
+}
+scenario "GraphQL query depth is rejected" {
+  request { entry = Graph protocol = http method = POST path = "/graphql" query_depth = 9 query_cost = 20 }
+  expect { outcome = denied error = GRAPHQL_LIMIT_EXCEEDED }
+}
+scenario "Mongo declared throughput is exceeded" {
+  request { entry = Edge protocol = https method = POST path = "/graphql" cache_result = miss query_depth = 3 query_cost = 20 rate_rps = 101 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "AWS Memcached hit" {
+  request { entry = API protocol = http path = "/memcached" cache_result = hit rate_rps = 50 }
+  expect { outcome = success accesses Memcached }
+}

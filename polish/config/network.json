@@ -1,0 +1,50 @@
+{
+  "components": {
+    "cdn": {
+      "properties": [
+        "bot_mitigation",
+        "rate_limiting",
+        "request_collapsing",
+        "shielding",
+        "tls",
+        "tls_termination",
+        "upstream_protocol",
+        "provider",
+        "product"
+      ],
+      "parents": []
+    },
+    "gateway": {
+      "properties": [
+        "rate_limiting",
+        "tls",
+        "tls_termination",
+        "upstream_protocol",
+        "provider",
+        "product"
+      ],
+      "parents": []
+    },
+    "load_balancer": {
+      "properties": [
+        "tls",
+        "tls_termination",
+        "upstream_protocol",
+        "provider",
+        "product"
+      ],
+      "parents": []
+    },
+    "cache": {
+      "properties": [
+        "tls",
+        "tls_termination",
+        "ttl",
+        "upstream_protocol",
+        "provider",
+        "product"
+      ],
+      "parents": []
+    }
+  }
+}

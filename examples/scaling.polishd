@@ -1,0 +1,60 @@
+// CPU costs below are illustrative assumptions, not AWS/Postgres benchmarks.
+architecture Scaling {
+  compute_pool AppPool {
+    provider = aws
+    instance_type = "m7i.large"
+    instances = 1..4
+    cpu_utilization = 0.7
+  }
+  service API {
+    hosted_on AppPool
+    operation calculate {
+      method = GET path = "/calculate"
+      cpu_ms = 10
+    }
+    operation search {
+      method = GET path = "/search"
+      cpu_ms = 1
+      reads Products.Items { read_from = replica cpu_ms = 20 }
+    }
+    operation save {
+      method = POST path = "/save"
+      cpu_ms = 1
+      writes Products.Items { cpu_ms = 20 }
+    }
+  }
+  database Products {
+    kind = relational
+    read_replicas = 1
+    hosted_on PostgresHost
+    table Items { id: uuid primary_key }
+  }
+  database_cluster PostgresHost {
+    engine = postgres
+    provider = aws
+    instance_type = "m7i.large"
+    cpu_utilization = 0.7
+    replicas = 4
+  }
+}
+
+scenario "One service instance is overloaded" {
+  request { entry = API protocol = http path = "/calculate" rate_rps = 200 scale = minimum }
+  expect { outcome = error error = CAPACITY_EXCEEDED }
+}
+scenario "Four service instances handle the same workload" {
+  request { entry = API protocol = http path = "/calculate" rate_rps = 200 scale = maximum }
+  expect { outcome = success }
+}
+scenario "One Postgres read replica is overloaded" {
+  request { entry = API protocol = http path = "/search" rate_rps = 100 }
+  expect { outcome = error error = CAPACITY_EXCEEDED }
+}
+scenario "Postgres handles a lighter read workload" {
+  request { entry = API protocol = http path = "/search" rate_rps = 50 }
+  expect { outcome = success }
+}
+scenario "Postgres primary write bottleneck" {
+  request { entry = API protocol = http method = POST path = "/save" rate_rps = 100 scale = maximum }
+  expect { outcome = error error = CAPACITY_EXCEEDED }
+}

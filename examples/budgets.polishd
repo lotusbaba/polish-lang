@@ -1,0 +1,59 @@
+architecture Budgets {
+  compute_pool Apps {
+    provider = aws
+    instance_type = "m7i.large"
+    instances = 4..20
+    cpu_utilization = 0.7
+    memory_utilization = 0.8
+  }
+  service Checkout {
+    hosted_on Apps
+    base_memory_mib = 512
+    connection_pool_size = 20
+    operation buy {
+      method = POST path = "/buy"
+      cpu_ms = 10
+      duration_ms = 100
+      memory_per_request_mib = 2
+      writes Products.Items { cpu_ms = 0.1 }
+    }
+    operation report {
+      method = GET path = "/report"
+      cpu_ms = 1
+      duration_ms = 1000
+      memory_per_request_mib = 200
+    }
+  }
+  database Products {
+    kind = relational
+    max_connections = 200
+    reserved_connections = 20
+    hosted_on Storage
+    table Items { id: uuid primary_key }
+  }
+  database_cluster Storage {
+    engine = postgres
+    provider = aws
+    instance_type = "m7i.large"
+  }
+}
+scenario "Four instances fit all budgets" {
+  request { entry = Checkout protocol = http method = POST path = "/buy" rate_rps = 400 scale = minimum }
+  expect { outcome = success }
+}
+scenario "Four instances cannot handle the CPU load" {
+  request { entry = Checkout protocol = http method = POST path = "/buy" rate_rps = 800 scale = minimum }
+  expect { outcome = error error = CAPACITY_EXCEEDED }
+}
+scenario "Scale out fixes CPU but exceeds connection budget" {
+  request { entry = Checkout protocol = http method = POST path = "/buy" rate_rps = 800 scale = maximum }
+  expect { outcome = error error = CONNECTION_BUDGET_EXCEEDED }
+}
+scenario "Reports have enough CPU but insufficient memory" {
+  request { entry = Checkout protocol = http path = "/report" rate_rps = 200 scale = minimum }
+  expect { outcome = error error = MEMORY_CAPACITY_EXCEEDED }
+}
+scenario "More instances fit report memory" {
+  request { entry = Checkout protocol = http path = "/report" rate_rps = 200 scale = maximum }
+  expect { outcome = success }
+}

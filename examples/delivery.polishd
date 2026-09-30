@@ -1,0 +1,54 @@
+architecture Delivery {
+  artifact_store Assets { provider = aws product = s3 max_requests_rps = 100 }
+  artifact_store Website { provider = aws product = s3 endpoint = website }
+  artifact_store Images { provider = aws product = ecr max_pulls_rps = 5 }
+  cdn CloudFront { provider = aws product = cloudfront limit_rps = 200 routes_to Assets }
+  cdn Cloudflare { provider = cloudflare product = cdn limit_rps = 150 routes_to Assets }
+  frontend Shop { rendering = static loaded_from CloudFront }
+  compute_pool Apps { provider = aws instance_type = "m7i.large" instances = 1 }
+  service Api {
+    hosted_on Apps
+    image_from Images { authorized = true }
+    operation get { method = GET path = "/" cpu_ms = 1 }
+  }
+}
+scenario "CloudFront delivers S3 assets" {
+  request { entry = Shop protocol = https rate_rps = 100 }
+  expect { outcome = success reaches Assets }
+}
+scenario "Cloudflare delivers S3 assets" {
+  request { entry = Cloudflare protocol = https rate_rps = 100 }
+  expect { outcome = success reaches Assets }
+}
+scenario "S3 capacity exceeded" {
+  request { entry = CloudFront protocol = https rate_rps = 101 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "CloudFront rate policy" {
+  request { entry = CloudFront protocol = https rate_rps = 201 }
+  expect { outcome = denied error = RATE_LIMITED }
+}
+scenario "Cloudflare rate policy" {
+  request { entry = Cloudflare protocol = https rate_rps = 151 }
+  expect { outcome = denied error = RATE_LIMITED }
+}
+scenario "S3 website rejects HTTPS" {
+  request { entry = Website protocol = https }
+  expect { outcome = error error = TLS_UNSUPPORTED }
+}
+scenario "S3 website accepts HTTP" {
+  request { entry = Website protocol = http }
+  expect { outcome = success }
+}
+scenario "S3 website rejects writes" {
+  request { entry = Website protocol = http method = POST }
+  expect { outcome = error error = S3_WEBSITE_METHOD }
+}
+scenario "ECR image pull succeeds" {
+  request { entry = Api protocol = http image_pulls_rps = 5 }
+  expect { outcome = success reaches Images }
+}
+scenario "ECR image pull capacity exceeded" {
+  request { entry = Api protocol = http image_pulls_rps = 6 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}

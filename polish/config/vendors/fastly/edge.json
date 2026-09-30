@@ -1,0 +1,59 @@
+{
+  "products": {
+    "cdn": {
+      "component": "cdn",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    },
+    "signal_sciences": {
+      "component": "gateway",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    },
+    "next_gen_waf": {
+      "component": "gateway",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer"
+      }
+    }
+  },
+  "sources": [
+    "https://www.fastly.com/documentation/guides/next-gen-waf/setup-and-configuration/agent-management/getting-started-with-the-agent/"
+  ],
+  "verified_on": "2026-09-29"
+}

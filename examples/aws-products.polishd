@@ -1,0 +1,77 @@
+architecture AwsProducts {
+  load_balancer PublicALB {
+    provider = aws
+    product = alb
+    tls_termination = true
+    routes_to Apps
+  }
+  compute_pool Apps {
+    provider = aws
+    instance_type = "m7i.large"
+    instances = 2
+  }
+  service API {
+    hosted_on Apps
+    operation lookup {
+      method = GET path = "/lookup"
+      cpu_ms = 1
+      reads Sessions.Tokens { item_bytes = 4096 consistency = strong }
+    }
+    operation save {
+      method = POST path = "/save"
+      cpu_ms = 1
+      writes Sessions.Tokens { item_bytes = 1500 }
+    }
+    operation order {
+      method = POST path = "/order"
+      cpu_ms = 1
+      writes Orders.Purchases { via = DatabaseNLB protocol = tls cpu_ms = 2 }
+    }
+  }
+  database Sessions {
+    kind = key_value
+    partitions = managed
+    hosted_on DynamoTable
+    keyspace Tokens { key_type = string value_type = json }
+  }
+  database_cluster DynamoTable {
+    provider = aws
+    product = dynamodb
+    capacity_mode = provisioned
+    read_capacity_units = 100
+    write_capacity_units = 50
+  }
+  load_balancer DatabaseNLB {
+    provider = aws
+    product = nlb
+    tls = true
+    routes_to Rds
+  }
+  database Orders {
+    kind = relational
+    hosted_on Rds
+    table Purchases { id: uuid primary_key }
+  }
+  database_cluster Rds {
+    provider = aws
+    product = rds_postgres
+    instance_type = "db.m7i.large"
+    multi_az = true
+  }
+}
+scenario "ALB and DynamoDB read fit capacity" {
+  request { entry = PublicALB protocol = https path = "/lookup" rate_rps = 100 }
+  expect { outcome = success accesses Sessions.Tokens }
+}
+scenario "DynamoDB read throttles" {
+  request { entry = PublicALB protocol = https path = "/lookup" rate_rps = 101 }
+  expect { outcome = error error = DYNAMODB_THROTTLED }
+}
+scenario "DynamoDB writes round up to two units" {
+  request { entry = PublicALB protocol = https method = POST path = "/save" rate_rps = 30 }
+  expect { outcome = error error = DYNAMODB_THROTTLED }
+}
+scenario "NLB routes encrypted calls to RDS" {
+  request { entry = PublicALB protocol = https method = POST path = "/order" rate_rps = 100 }
+  expect { outcome = success reaches DatabaseNLB accesses Orders.Purchases }
+}

@@ -1,0 +1,203 @@
+{
+  "relationships": {
+    "navigates_to": {
+      "sources": [
+        "page"
+      ],
+      "targets": [
+        "page"
+      ]
+    },
+    "invokes": {
+      "sources": [
+        "frontend",
+        "operation",
+        "page",
+        "service",
+        "cache"
+      ],
+      "targets": [
+        "operation",
+        "service"
+      ]
+    },
+    "reads": {
+      "sources": [
+        "operation",
+        "service"
+      ],
+      "targets": [
+        "collection",
+        "database",
+        "document",
+        "keyspace",
+        "table",
+        "cache"
+      ]
+    },
+    "writes": {
+      "sources": [
+        "operation",
+        "service"
+      ],
+      "targets": [
+        "collection",
+        "database",
+        "document",
+        "keyspace",
+        "table",
+        "cache"
+      ]
+    },
+    "loaded_from": {
+      "sources": [
+        "frontend",
+        "page"
+      ],
+      "targets": [
+        "artifact_store",
+        "load_balancer",
+        "service",
+        "cdn"
+      ]
+    },
+    "hosted_on": {
+      "sources": [
+        "cache",
+        "database",
+        "service",
+        "gateway"
+      ],
+      "targets": [
+        "compute_pool",
+        "database_cluster"
+      ]
+    },
+    "routes_to": {
+      "sources": [
+        "cache",
+        "cdn",
+        "gateway",
+        "load_balancer"
+      ],
+      "targets": [
+        "artifact_store",
+        "cache",
+        "cdn",
+        "compute_pool",
+        "database",
+        "database_cluster",
+        "gateway",
+        "load_balancer",
+        "operation",
+        "service"
+      ]
+    },
+    "publishes_to": {
+      "sources": [
+        "service",
+        "operation"
+      ],
+      "targets": [
+        "queue",
+        "stream"
+      ]
+    },
+    "consumes_from": {
+      "sources": [
+        "service",
+        "operation"
+      ],
+      "targets": [
+        "queue",
+        "stream"
+      ]
+    },
+    "submits_to": {
+      "sources": [
+        "service",
+        "operation"
+      ],
+      "targets": [
+        "batch_cluster"
+      ]
+    },
+    "image_from": {
+      "sources": [
+        "service"
+      ],
+      "targets": [
+        "artifact_store"
+      ]
+    }
+  },
+  "connection_options": {
+    "invokes": [
+      "via",
+      "protocol",
+      "path"
+    ],
+    "reads": [
+      "via",
+      "protocol",
+      "path",
+      "read_from",
+      "consistency",
+      "cpu_ms",
+      "item_bytes"
+    ],
+    "writes": [
+      "via",
+      "protocol",
+      "path",
+      "durability",
+      "cpu_ms",
+      "item_bytes"
+    ],
+    "submits_to": [
+      "job_cpu_ms"
+    ],
+    "image_from": [
+      "authorized"
+    ]
+  },
+  "connection_protocols": {
+    "invokes": [
+      "http",
+      "https"
+    ],
+    "reads": [
+      "tcp",
+      "tls"
+    ],
+    "writes": [
+      "tcp",
+      "tls"
+    ]
+  },
+  "connection_enums": {
+    "read_from": [
+      "primary",
+      "replica"
+    ],
+    "consistency": [
+      "strong",
+      "eventual"
+    ],
+    "durability": [
+      "memory",
+      "disk",
+      "replicated"
+    ]
+  },
+  "connection_entries": [
+    "cdn",
+    "gateway",
+    "load_balancer",
+    "cache",
+    "compute_pool",
+    "service",
+    "database_cluster",
+    "database"
+  ]
+}

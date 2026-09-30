@@ -1,0 +1,30 @@
+{
+  "products": {
+    "graphql": {
+      "component": "gateway",
+      "defaults": {},
+      "required": [],
+      "properties": [
+        "limit_rps",
+        "burst_limit",
+        "max_query_depth",
+        "max_query_cost"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ],
+      "property_types": {
+        "limit_rps": "positive",
+        "burst_limit": "positive_integer",
+        "max_query_depth": "positive_integer",
+        "max_query_cost": "positive"
+      },
+      "host_required": true
+    }
+  },
+  "sources": [
+    "https://graphql.org/learn/"
+  ],
+  "verified_on": "2026-09-29"
+}

@@ -1,0 +1,46 @@
+{
+  "components": {
+    "frontend": {
+      "properties": [
+        "rendering"
+      ],
+      "parents": []
+    },
+    "page": {
+      "properties": [
+        "rendering"
+      ],
+      "parents": [
+        "frontend"
+      ]
+    },
+    "role": {
+      "properties": [],
+      "parents": []
+    },
+    "artifact_store": {
+      "properties": [
+        "kind",
+        "tls",
+        "provider",
+        "product"
+      ],
+      "parents": []
+    }
+  },
+  "loading": {
+    "static": [
+      "artifact_store",
+      "cdn"
+    ],
+    "server": [
+      "service",
+      "load_balancer"
+    ]
+  },
+  "artifact_kinds": [
+    "object_store",
+    "artifactory",
+    "container_registry"
+  ]
+}

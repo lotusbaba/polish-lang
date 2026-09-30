@@ -1,0 +1,930 @@
+{
+  "errors": {
+    "E_SYNTAX": {
+      "code": "E_SYNTAX",
+      "phase": "compile",
+      "message": "Invalid syntax: {context}",
+      "parameters": [
+        "context"
+      ]
+    },
+    "E_RELATION_TYPE": {
+      "code": "E_RELATION_TYPE",
+      "phase": "compile",
+      "message": "{src_kind} cannot {edge_kind} {dst_kind}.",
+      "parameters": [
+        "src_kind",
+        "edge_kind",
+        "dst_kind"
+      ]
+    },
+    "E_DUPLICATE_RELATION": {
+      "code": "E_DUPLICATE_RELATION",
+      "phase": "compile",
+      "message": "Repeated relationship from '{edge_source}' to '{edge_target}'.",
+      "parameters": [
+        "edge_source",
+        "edge_target"
+      ]
+    },
+    "E_ROUTE": {
+      "code": "E_ROUTE",
+      "phase": "compile",
+      "message": "Route patterns must start with '/'.",
+      "parameters": []
+    },
+    "E_ROUTE_2": {
+      "code": "E_ROUTE",
+      "phase": "compile",
+      "message": "Operation paths must start with '/'.",
+      "parameters": []
+    },
+    "E_ENDPOINT": {
+      "code": "E_ENDPOINT",
+      "phase": "compile",
+      "message": "An HTTP operation needs both method and path.",
+      "parameters": []
+    },
+    "E_TLS_CONFIG": {
+      "code": "E_TLS_CONFIG",
+      "phase": "compile",
+      "message": "TLS termination conflicts with tls = false.",
+      "parameters": []
+    },
+    "E_HOST_COUNT": {
+      "code": "E_HOST_COUNT",
+      "phase": "compile",
+      "message": "'{node_name}' requires exactly one hosted_on relationship.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_STORAGE_KIND": {
+      "code": "E_STORAGE_KIND",
+      "phase": "compile",
+      "message": "Artifact stores require kind = object_store or artifactory.",
+      "parameters": []
+    },
+    "E_AMBIGUOUS_ROUTE": {
+      "code": "E_AMBIGUOUS_ROUTE",
+      "phase": "compile",
+      "message": "'{node_name}' has multiple routes with the same pattern or multiple defaults.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_DUPLICATE_SCENARIO": {
+      "code": "E_DUPLICATE_SCENARIO",
+      "phase": "compile",
+      "message": "Repeated scenario '{name}'.",
+      "parameters": [
+        "name"
+      ]
+    },
+    "E_SCENARIO": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Unknown request property '{key}'.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_SCENARIO_2": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Unknown expectation property '{key}'.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_SCENARIO_3": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Expected outcome must be success, denied, or error.",
+      "parameters": []
+    },
+    "E_SCENARIO_4": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "A request requires an entry component.",
+      "parameters": []
+    },
+    "E_ROLE": {
+      "code": "E_ROLE",
+      "phase": "compile",
+      "message": "Request actor must reference a role.",
+      "parameters": []
+    },
+    "E_SCENARIO_5": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Frontend actions require both action and via.",
+      "parameters": []
+    },
+    "E_SCENARIO_6": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Protocol must be http or https.",
+      "parameters": []
+    },
+    "E_SCENARIO_7": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Unsupported HTTP method.",
+      "parameters": []
+    },
+    "E_SCENARIO_8": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Request path must start with '/'.",
+      "parameters": []
+    },
+    "E_SCENARIO_9": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Authenticated must be boolean.",
+      "parameters": []
+    },
+    "E_DUPLICATE_PROPERTY": {
+      "code": "E_DUPLICATE_PROPERTY",
+      "phase": "compile",
+      "message": "Property '{key}' is repeated.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_DUPLICATE_NAME": {
+      "code": "E_DUPLICATE_NAME",
+      "phase": "compile",
+      "message": "'{name}' is already declared.",
+      "parameters": [
+        "name"
+      ]
+    },
+    "E_CONTAINMENT": {
+      "code": "E_CONTAINMENT",
+      "phase": "compile",
+      "message": "A {kind} cannot be declared inside {parent_kind_or_architecture}.",
+      "parameters": [
+        "kind",
+        "parent_kind_or_architecture"
+      ]
+    },
+    "E_PROPERTY": {
+      "code": "E_PROPERTY",
+      "phase": "compile",
+      "message": "Architecture-level properties are not supported.",
+      "parameters": []
+    },
+    "E_HOST_TYPE": {
+      "code": "E_HOST_TYPE",
+      "phase": "compile",
+      "message": "{src_kind} must be hosted on {expected}.",
+      "parameters": [
+        "src_kind",
+        "expected"
+      ]
+    },
+    "E_PROPERTY_2": {
+      "code": "E_PROPERTY",
+      "phase": "compile",
+      "message": "Unknown property '{key}' on {node_kind} '{node_name}'.",
+      "parameters": [
+        "key",
+        "node_kind",
+        "node_name"
+      ]
+    },
+    "E_PROPERTY_TYPE": {
+      "code": "E_PROPERTY_TYPE",
+      "phase": "compile",
+      "message": "'{key}' must be boolean.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_SCALE": {
+      "code": "E_SCALE",
+      "phase": "compile",
+      "message": "'{key}' must be a nonnegative integer.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_SCALE_2": {
+      "code": "E_SCALE",
+      "phase": "compile",
+      "message": "Partitions must be a positive integer or managed.",
+      "parameters": []
+    },
+    "E_PROPERTY_VALUE": {
+      "code": "E_PROPERTY_VALUE",
+      "phase": "compile",
+      "message": "Invalid {key}: {val!r}.",
+      "parameters": [
+        "key",
+        "val"
+      ]
+    },
+    "E_LOAD_COUNT": {
+      "code": "E_LOAD_COUNT",
+      "phase": "compile",
+      "message": "'{node_name}' requires exactly one loading source (possibly inherited).",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_RENDERING": {
+      "code": "E_RENDERING",
+      "phase": "compile",
+      "message": "'{node_name}' needs static or server rendering.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_DATABASE_KIND": {
+      "code": "E_DATABASE_KIND",
+      "phase": "compile",
+      "message": "Database kind must be one of: {kinds}.",
+      "parameters": [
+        "kinds"
+      ]
+    },
+    "E_REFERENCE": {
+      "code": "E_REFERENCE",
+      "phase": "compile",
+      "message": "Unknown scenario {key}: {req_key!r}.",
+      "parameters": [
+        "key",
+        "req_key"
+      ]
+    },
+    "E_SCENARIO_10": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Invalid request entry kind.",
+      "parameters": []
+    },
+    "E_SCENARIO_11": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "Navigation requires page entry and destination.",
+      "parameters": []
+    },
+    "E_SCENARIO_12": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "An action starts at a page or frontend and cannot include destination.",
+      "parameters": []
+    },
+    "E_SCENARIO_13": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "An action must reference a service operation.",
+      "parameters": []
+    },
+    "E_SCENARIO_14": {
+      "code": "E_SCENARIO",
+      "phase": "compile",
+      "message": "An action's via must be a network entry, service, or compute pool.",
+      "parameters": []
+    },
+    "E_REFERENCE_2": {
+      "code": "E_REFERENCE",
+      "phase": "compile",
+      "message": "Unknown assertion target '{target}'.",
+      "parameters": [
+        "target"
+      ]
+    },
+    "E_REFERENCE_3": {
+      "code": "E_REFERENCE",
+      "phase": "compile",
+      "message": "Unknown relationship endpoint: '{raw_source}' \u2192 '{raw_target}'.",
+      "parameters": [
+        "raw_source",
+        "raw_target"
+      ]
+    },
+    "E_SCALE_3": {
+      "code": "E_SCALE",
+      "phase": "compile",
+      "message": "Instances must be positive, with minimum <= maximum.",
+      "parameters": []
+    },
+    "E_DATA_MODEL": {
+      "code": "E_DATA_MODEL",
+      "phase": "compile",
+      "message": "{child_kind} is incompatible with {kind} storage.",
+      "parameters": [
+        "child_kind",
+        "kind"
+      ]
+    },
+    "E_CAPACITY": {
+      "code": "E_CAPACITY",
+      "phase": "compile",
+      "message": "'{node_name}' requests {replicas} read replicas but its host provides {available}.",
+      "parameters": [
+        "node_name",
+        "replicas",
+        "available"
+      ]
+    },
+    "E_CAPACITY_2": {
+      "code": "E_CAPACITY",
+      "phase": "compile",
+      "message": "'{node_name}' requires more partitions than its host provides.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_REFERENCE_4": {
+      "code": "E_REFERENCE",
+      "phase": "compile",
+      "message": "Route requires an enclosing component and an existing target.",
+      "parameters": []
+    },
+    "E_LOAD_TYPE": {
+      "code": "E_LOAD_TYPE",
+      "phase": "compile",
+      "message": "{rendering} rendering cannot load from {source_kind}.",
+      "parameters": [
+        "rendering",
+        "source_kind"
+      ]
+    },
+    "E_REFERENCE_5": {
+      "code": "E_REFERENCE",
+      "phase": "compile",
+      "message": "Unknown connection entry '{options_via}'.",
+      "parameters": [
+        "options_via"
+      ]
+    },
+    "E_REQUIREMENT": {
+      "code": "E_REQUIREMENT",
+      "phase": "compile",
+      "message": "Access requirements belong to frontends, pages, services, or operations.",
+      "parameters": []
+    },
+    "E_FIELD": {
+      "code": "E_FIELD",
+      "phase": "compile",
+      "message": "Fields belong to tables, documents, or collections.",
+      "parameters": []
+    },
+    "E_ROLE_2": {
+      "code": "E_ROLE",
+      "phase": "compile",
+      "message": "Access requirement must reference a declared role.",
+      "parameters": []
+    },
+    "E_DUPLICATE_FIELD": {
+      "code": "E_DUPLICATE_FIELD",
+      "phase": "compile",
+      "message": "Field '{name}' is repeated.",
+      "parameters": [
+        "name"
+      ]
+    },
+    "E_FIELD_TYPE": {
+      "code": "E_FIELD_TYPE",
+      "phase": "compile",
+      "message": "Unknown field type '{field_type}'.",
+      "parameters": [
+        "field_type"
+      ]
+    },
+    "E_KEYSPACE": {
+      "code": "E_KEYSPACE",
+      "phase": "compile",
+      "message": "'{node_name}' requires key_type and value_type.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_REPLICATION": {
+      "code": "E_REPLICATION",
+      "phase": "compile",
+      "message": "Read replicas must fit within replication_factor minus the primary.",
+      "parameters": []
+    },
+    "E_REPLICATION_2": {
+      "code": "E_REPLICATION",
+      "phase": "compile",
+      "message": "Failure domains cannot exceed the number of copies per partition.",
+      "parameters": []
+    },
+    "E_DURABILITY": {
+      "code": "E_DURABILITY",
+      "phase": "compile",
+      "message": "Replicated durability requires at least two copies, synchronous replication, and quorum/all write acknowledgements.",
+      "parameters": []
+    },
+    "E_REPLICATION_3": {
+      "code": "E_REPLICATION",
+      "phase": "compile",
+      "message": "quorum/all acknowledgements require synchronous replication and at least two copies.",
+      "parameters": []
+    },
+    "E_BACKUP": {
+      "code": "E_BACKUP",
+      "phase": "compile",
+      "message": "Backup retention requires backups = true.",
+      "parameters": []
+    },
+    "E_BACKUP_2": {
+      "code": "E_BACKUP",
+      "phase": "compile",
+      "message": "Backups require an explicit backup_retention_days policy.",
+      "parameters": []
+    },
+    "E_CONNECTION": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "'{key}' is not supported on {edge_kind}.",
+      "parameters": [
+        "key",
+        "edge_kind"
+      ]
+    },
+    "E_CONNECTION_2": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "Frontend invocation permissions have no transport options; use action/via in the scenario.",
+      "parameters": []
+    },
+    "E_CONNECTION_3": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "{edge_kind} protocol must be one of {sorted_protocols}.",
+      "parameters": [
+        "edge_kind",
+        "sorted_protocols"
+      ]
+    },
+    "E_CONNECTION_4": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "Cannot route a connection via {via_kind}.",
+      "parameters": [
+        "via_kind"
+      ]
+    },
+    "E_CONNECTION_5": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "Connection paths must start with '/'.",
+      "parameters": []
+    },
+    "E_STORAGE_VALUE": {
+      "code": "E_STORAGE_VALUE",
+      "phase": "compile",
+      "message": "Invalid {key} on '{node_name}': {val!r}.",
+      "parameters": [
+        "key",
+        "node_name",
+        "val"
+      ]
+    },
+    "E_SCALE_4": {
+      "code": "E_SCALE",
+      "phase": "compile",
+      "message": "{key} must be a positive integer.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "E_DURABILITY_2": {
+      "code": "E_DURABILITY",
+      "phase": "compile",
+      "message": "'{node_name}' requires storage = persistent on its host.",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "E_CONNECTION_6": {
+      "code": "E_CONNECTION",
+      "phase": "compile",
+      "message": "Invalid connection {key}: {p_key!r}.",
+      "parameters": [
+        "key",
+        "p_key"
+      ]
+    },
+    "E_CAPACITY_3": {
+      "code": "E_CAPACITY",
+      "phase": "compile",
+      "message": "'{node_name}' requires {required} {key}; its host provides {available}.",
+      "parameters": [
+        "node_name",
+        "required",
+        "key",
+        "available"
+      ]
+    },
+    "NO_NAVIGATION_PATH": {
+      "code": "NO_NAVIGATION_PATH",
+      "phase": "simulation",
+      "message": "No navigation path from '{entry}' to '{destination}'.",
+      "parameters": [
+        "entry",
+        "destination"
+      ],
+      "outcome": "error"
+    },
+    "TLS_UNSUPPORTED": {
+      "code": "TLS_UNSUPPORTED",
+      "phase": "simulation",
+      "message": "'{node_name}' does not accept TLS.",
+      "parameters": [
+        "node_name"
+      ],
+      "outcome": "error"
+    },
+    "NO_ROUTE": {
+      "code": "NO_ROUTE",
+      "phase": "simulation",
+      "message": "No route from '{node_name}' matches {path!r}.",
+      "parameters": [
+        "node_name",
+        "path"
+      ],
+      "outcome": "error"
+    },
+    "AMBIGUOUS_ROUTE": {
+      "code": "AMBIGUOUS_ROUTE",
+      "phase": "simulation",
+      "message": "Multiple equally specific routes match at '{node_name}'.",
+      "parameters": [
+        "node_name"
+      ],
+      "outcome": "error"
+    },
+    "PROTOCOL_MISMATCH": {
+      "code": "PROTOCOL_MISMATCH",
+      "phase": "simulation",
+      "message": "'{node_name}' cannot convert {protocol} to {upstream}.",
+      "parameters": [
+        "node_name",
+        "protocol",
+        "upstream"
+      ],
+      "outcome": "error"
+    },
+    "TLS_TERMINATION_REQUIRED": {
+      "code": "TLS_TERMINATION_REQUIRED",
+      "phase": "simulation",
+      "message": "'{node_name}' must terminate TLS before forwarding {plain_upper}.",
+      "parameters": [
+        "node_name",
+        "plain_upper"
+      ],
+      "outcome": "error"
+    },
+    "NO_ENDPOINT": {
+      "code": "NO_ENDPOINT",
+      "phase": "simulation",
+      "message": "No operation matches the request method and path.",
+      "parameters": [],
+      "outcome": "error"
+    },
+    "AMBIGUOUS_ENDPOINT": {
+      "code": "AMBIGUOUS_ENDPOINT",
+      "phase": "simulation",
+      "message": "Multiple operations match the request.",
+      "parameters": [],
+      "outcome": "error"
+    },
+    "REQUEST_CYCLE": {
+      "code": "REQUEST_CYCLE",
+      "phase": "simulation",
+      "message": "Request revisited '{name}' before completing.",
+      "parameters": [
+        "name"
+      ],
+      "outcome": "error"
+    },
+    "ACCESS_DENIED": {
+      "code": "ACCESS_DENIED",
+      "phase": "simulation",
+      "message": "No authorized navigation path to '{destination}'.",
+      "parameters": [
+        "destination"
+      ],
+      "outcome": "denied"
+    },
+    "ACCESS_DENIED_2": {
+      "code": "ACCESS_DENIED",
+      "phase": "simulation",
+      "message": "'{node_name}' requires {requirement}.",
+      "parameters": [
+        "node_name",
+        "requirement"
+      ],
+      "outcome": "denied"
+    },
+    "REQUEST_CYCLE_2": {
+      "code": "REQUEST_CYCLE",
+      "phase": "simulation",
+      "message": "Connection from '{edge_source}' cycles at '{current}'.",
+      "parameters": [
+        "edge_source",
+        "current"
+      ],
+      "outcome": "error"
+    },
+    "PROTOCOL_MISMATCH_2": {
+      "code": "PROTOCOL_MISMATCH",
+      "phase": "simulation",
+      "message": "'{current}' only routes HTTP connections.",
+      "parameters": [
+        "current"
+      ],
+      "outcome": "error"
+    },
+    "WRONG_DESTINATION": {
+      "code": "WRONG_DESTINATION",
+      "phase": "simulation",
+      "message": "Connection from '{edge_source}' reached '{current}', expected '{destination_name}' on '{host_name}'.",
+      "parameters": [
+        "edge_source",
+        "current",
+        "destination_name",
+        "host_name"
+      ],
+      "outcome": "error"
+    },
+    "INVOCATION_NOT_ALLOWED": {
+      "code": "INVOCATION_NOT_ALLOWED",
+      "phase": "simulation",
+      "message": "'{entry_name}' cannot invoke '{action_name}'.",
+      "parameters": [
+        "entry_name",
+        "action_name"
+      ],
+      "outcome": "denied"
+    },
+    "ACTION_NOT_REACHED": {
+      "code": "ACTION_NOT_REACHED",
+      "phase": "simulation",
+      "message": "The request did not reach '{action_name}'.",
+      "parameters": [
+        "action_name"
+      ],
+      "outcome": "error"
+    },
+    "NO_READ_REPLICA": {
+      "code": "NO_READ_REPLICA",
+      "phase": "simulation",
+      "message": "'{database_name}' has no read replicas.",
+      "parameters": [
+        "database_name"
+      ],
+      "outcome": "error"
+    },
+    "CONSISTENCY_UNSUPPORTED": {
+      "code": "CONSISTENCY_UNSUPPORTED",
+      "phase": "simulation",
+      "message": "Strong reads from '{database_name}' replicas require synchronous replication in this model.",
+      "parameters": [
+        "database_name"
+      ],
+      "outcome": "error"
+    },
+    "DURABILITY_UNSATISFIED": {
+      "code": "DURABILITY_UNSATISFIED",
+      "phase": "simulation",
+      "message": "'{node_name}' requires {required} writes; '{database_name}' provides {durability}.",
+      "parameters": [
+        "node_name",
+        "required",
+        "database_name",
+        "durability"
+      ],
+      "outcome": "error"
+    },
+    "AMBIGUOUS_RENDERER": {
+      "code": "AMBIGUOUS_RENDERER",
+      "phase": "simulation",
+      "message": "A rendering pool must host exactly one renderer service.",
+      "parameters": [],
+      "outcome": "error"
+    },
+    "PROTOCOL_MISMATCH_3": {
+      "code": "PROTOCOL_MISMATCH",
+      "phase": "simulation",
+      "message": "Database endpoints require a reads/writes connection, not an HTTP request.",
+      "parameters": [],
+      "outcome": "error"
+    },
+    "E_FILE": {
+      "code": "E_FILE",
+      "phase": "cli",
+      "message": "{detail}",
+      "parameters": [
+        "detail"
+      ]
+    },
+    "E_NO_SCENARIOS": {
+      "code": "E_NO_SCENARIOS",
+      "phase": "cli",
+      "message": "No matching scenarios to simulate.",
+      "parameters": []
+    },
+    "ASSERT_OUTCOME": {
+      "code": "ASSERT_OUTCOME",
+      "phase": "assertion",
+      "message": "Expected {expected}, received {actual}.",
+      "parameters": [
+        "expected",
+        "actual"
+      ]
+    },
+    "ASSERT_ERROR": {
+      "code": "ASSERT_ERROR",
+      "phase": "assertion",
+      "message": "Expected error {expected}, received {actual}.",
+      "parameters": [
+        "expected",
+        "actual"
+      ]
+    },
+    "ASSERT_OBSERVATION": {
+      "code": "ASSERT_OBSERVATION",
+      "phase": "assertion",
+      "message": "Expected {kind} {target}, but it was not observed.",
+      "parameters": [
+        "kind",
+        "target"
+      ]
+    },
+    "E_SCALING": {
+      "code": "E_SCALING",
+      "phase": "compile",
+      "parameters": [
+        "detail"
+      ],
+      "message": "Invalid scaling model: {detail}"
+    },
+    "CAPACITY_EXCEEDED": {
+      "code": "CAPACITY_EXCEEDED",
+      "phase": "simulation",
+      "parameters": [
+        "resource",
+        "demand",
+        "capacity",
+        "required"
+      ],
+      "message": "{resource}: requires {demand} CPU-ms/s, capacity is {capacity}; at least {required} instances needed.",
+      "outcome": "error"
+    },
+    "SCALING_MODEL_INCOMPLETE": {
+      "code": "SCALING_MODEL_INCOMPLETE",
+      "phase": "simulation",
+      "parameters": [
+        "detail"
+      ],
+      "message": "Incomplete scaling model: {detail}",
+      "outcome": "error"
+    },
+    "PRIMARY_CAPACITY_EXCEEDED": {
+      "code": "CAPACITY_EXCEEDED",
+      "phase": "simulation",
+      "parameters": [
+        "resource",
+        "demand",
+        "capacity"
+      ],
+      "message": "{resource}: requires {demand} CPU-ms/s, but the single primary provides {capacity}. Increase per-instance CPU capacity or reduce CPU cost; read replicas do not increase write capacity.",
+      "outcome": "error"
+    },
+    "MEMORY_CAPACITY_EXCEEDED": {
+      "code": "MEMORY_CAPACITY_EXCEEDED",
+      "message": "{resource}: requires {demand} MiB, available memory is {capacity} MiB.",
+      "parameters": [
+        "resource",
+        "demand",
+        "capacity"
+      ],
+      "phase": "simulation",
+      "outcome": "error"
+    },
+    "CONNECTION_BUDGET_EXCEEDED": {
+      "code": "CONNECTION_BUDGET_EXCEEDED",
+      "message": "{resource}: configured pools could open {demand} connections per database instance; only {capacity} are available.",
+      "parameters": [
+        "resource",
+        "demand",
+        "capacity"
+      ],
+      "phase": "simulation",
+      "outcome": "error"
+    },
+    "E_VENDOR": {
+      "code": "E_VENDOR",
+      "phase": "compile",
+      "parameters": [
+        "detail"
+      ],
+      "message": "Invalid cloud product configuration: {detail}"
+    },
+    "AWS_PROTOCOL_UNSUPPORTED": {
+      "code": "AWS_PROTOCOL_UNSUPPORTED",
+      "phase": "simulation",
+      "parameters": [
+        "node",
+        "protocol"
+      ],
+      "message": "{node} does not support {protocol} in this product profile.",
+      "outcome": "error"
+    },
+    "DYNAMODB_THROTTLED": {
+      "code": "DYNAMODB_THROTTLED",
+      "phase": "simulation",
+      "parameters": [
+        "resource",
+        "demand",
+        "capacity"
+      ],
+      "message": "{resource}: requires {demand} units/s; configured capacity is {capacity} units/s.",
+      "outcome": "error"
+    },
+    "RATE_LIMITED": {
+      "code": "RATE_LIMITED",
+      "phase": "simulation",
+      "parameters": [
+        "node",
+        "demand",
+        "limit"
+      ],
+      "message": "{node}: offered load {demand} exceeds limit {limit}.",
+      "outcome": "denied"
+    },
+    "CACHE_CAPACITY_EXCEEDED": {
+      "code": "CACHE_CAPACITY_EXCEEDED",
+      "phase": "simulation",
+      "parameters": [
+        "node"
+      ],
+      "message": "Cache {node} exceeds its declared dataset or operations capacity.",
+      "outcome": "error"
+    },
+    "GRAPHQL_LIMIT_EXCEEDED": {
+      "code": "GRAPHQL_LIMIT_EXCEEDED",
+      "phase": "simulation",
+      "parameters": [
+        "node"
+      ],
+      "message": "GraphQL query exceeds configured limits at {node}.",
+      "outcome": "denied"
+    },
+    "UNSUPPORTED_SIMULATION": {
+      "code": "UNSUPPORTED_SIMULATION",
+      "phase": "simulation",
+      "parameters": [
+        "node"
+      ],
+      "message": "{node} supports architecture validation only; this execution model is not implemented.",
+      "outcome": "error"
+    },
+    "PLATFORM_CAPACITY_EXCEEDED": {
+      "code": "PLATFORM_CAPACITY_EXCEEDED",
+      "phase": "simulation",
+      "parameters": [
+        "node",
+        "detail"
+      ],
+      "message": "{node}: {detail}",
+      "outcome": "error"
+    },
+    "IMAGE_PULL_DENIED": {
+      "code": "IMAGE_PULL_DENIED",
+      "phase": "simulation",
+      "message": "Image pull from {node} requires workload authorization.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
+    },
+    "REGISTRY_NOT_WEB_ORIGIN": {
+      "code": "REGISTRY_NOT_WEB_ORIGIN",
+      "phase": "simulation",
+      "message": "Container registry {node} cannot serve a browser request.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
+    },
+    "S3_WEBSITE_METHOD": {
+      "code": "S3_WEBSITE_METHOD",
+      "phase": "simulation",
+      "message": "S3 website {node} only supports GET and HEAD.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
+    }
+  }
+}

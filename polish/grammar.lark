@@ -1,0 +1,35 @@
+start: architecture scenario*
+architecture: "architecture" NAME "{" statement* "}"
+?statement: declaration | property | relation | requirement | route | field
+declaration: KIND NAME ["{" statement* "}"]
+property: NAME "=" value
+relation: [reference] REL reference [edge_options]
+edge_options: "{" property* "}"
+requirement: "requires" "role" reference -> role_requirement
+           | "requires" "authenticated" -> auth_requirement
+route: "route" STRING "to" reference
+field: NAME ":" NAME [PRIMARY_KEY]
+scenario: "scenario" STRING "{" request expectation "}"
+request: "request" "{" property* "}"
+expectation: "expect" "{" (property | assertion)* "}"
+assertion: ASSERT reference
+?value: RANGE -> interval
+      | SIGNED_NUMBER -> number
+      | STRING -> string
+      | "true" -> true
+      | "false" -> false
+      | reference -> symbol
+reference: NAME ("." NAME)*
+KIND.2: /(?:__COMPONENT_KINDS__)\b/
+REL.2: /(?:__RELATION_KINDS__)\b/
+ASSERT.2: /(?:reaches|accesses)\b/
+PRIMARY_KEY: "primary_key"
+RANGE.3: /[0-9]+\s*\.\.\s*[0-9]+/
+%import common.CNAME -> NAME
+%import common.ESCAPED_STRING -> STRING
+%import common.INT
+%import common.SIGNED_NUMBER
+%import common.WS
+%ignore WS
+%ignore /\/\/[^\n]*/
+%ignore /#[^\n]*/

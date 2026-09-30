@@ -1,0 +1,116 @@
+// Connection options belong to a relationship, not its destination component.
+architecture Store {
+  compute_pool Apps { instances = 2..8 tls = true }
+  service Checkout {
+    hosted_on Apps
+    operation place_order {
+      method = POST
+      path = "/checkout"
+      invokes Inventory.reserve { via = InternalLB protocol = https }
+      writes Orders.Purchases { via = DataLB protocol = tls durability = replicated }
+      writes Sessions.Tokens { protocol = tls durability = disk }
+    }
+    operation legacy {
+      method = GET path = "/legacy"
+      invokes Legacy.lookup { protocol = https }
+    }
+    operation stale_read {
+      method = GET path = "/stale"
+      reads Sessions.Tokens { protocol = tls read_from = replica consistency = strong }
+    }
+    operation unsafe_write {
+      method = POST path = "/unsafe"
+      writes Scratch { durability = disk }
+    }
+  }
+  load_balancer InternalLB { tls = true routes_to Apps }
+  service Inventory {
+    tls = true
+    hosted_on Apps
+    operation reserve {
+      reads Products.Items { via = DataLB protocol = tls path = "/products" read_from = replica consistency = strong }
+    }
+  }
+  service Legacy {
+    // Intentionally missing TLS support.
+    hosted_on Apps
+    operation lookup
+  }
+  load_balancer DataLB {
+    tls = true
+    route "/products" to ProductStorage
+    routes_to OrderStorage
+  }
+  database Products {
+    kind = relational
+    tls = true
+    read_replicas = 2
+    replication_factor = 3
+    replication = synchronous
+    durability = replicated
+    write_ack = quorum
+    failure_domains = 3
+    backups = true
+    backup_retention_days = 14
+    hosted_on ProductStorage
+    table Items { id: uuid primary_key stock: integer }
+  }
+  database Orders {
+    kind = document
+    tls = true
+    partitions = 8
+    replication_factor = 3
+    replication = synchronous
+    durability = replicated
+    write_ack = all
+    failure_domains = 3
+    hosted_on OrderStorage
+    collection Purchases { id: uuid primary_key items: json }
+  }
+  database Sessions {
+    kind = key_value
+    tls = true
+    partitions = managed
+    replication_factor = 3
+    read_replicas = 2
+    replication = asynchronous
+    durability = disk
+    hosted_on SessionStorage
+    keyspace Tokens { key_type = string value_type = json }
+  }
+  database Scratch { kind = key_value hosted_on ScratchStorage }
+  database_cluster ProductStorage {
+    tls = true storage = persistent replicas = 2 copies = 3 failure_domains = 3
+  }
+  database_cluster OrderStorage {
+    tls = true storage = persistent partitions = 8 copies = 3 failure_domains = 3
+  }
+  database_cluster SessionStorage {
+    tls = true storage = persistent partitions = managed replicas = 2 copies = 3
+  }
+  database_cluster ScratchStorage { storage = ephemeral }
+}
+
+scenario "Checkout uses all three storage kinds" {
+  request { entry = Checkout protocol = http method = POST path = "/checkout" }
+  expect {
+    outcome = success
+    reaches InternalLB
+    reaches DataLB
+    accesses Products.Items
+    accesses Orders.Purchases
+    accesses Sessions.Tokens
+  }
+}
+scenario "Legacy service rejects encrypted calls" {
+  request { entry = Checkout protocol = http path = "/legacy" }
+  expect { outcome = error error = TLS_UNSUPPORTED }
+}
+scenario "Async replica cannot promise strong reads" {
+  request { entry = Checkout protocol = http path = "/stale" }
+  expect { outcome = error error = CONSISTENCY_UNSUPPORTED }
+}
+scenario "Memory storage cannot promise disk durability" {
+  request { entry = Checkout protocol = http method = POST path = "/unsafe" }
+  expect { outcome = error error = DURABILITY_UNSATISFIED }
+}
