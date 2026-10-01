@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.10: a Python compiler and
+This repository contains version 0.11: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -1280,3 +1280,65 @@ Product references: [SNS FIFO](https://docs.aws.amazon.com/sns/latest/dg/sns-fif
 [Pub/Sub subscriptions](https://docs.cloud.google.com/pubsub/docs/subscription-overview),
 [Memorystore for Redis](https://docs.cloud.google.com/memorystore/docs/redis/memorystore-for-redis-overview),
 and [Cloud SQL replication](https://docs.cloud.google.com/sql/docs/postgres/replication).
+
+## Local runtimes, mounted storage, and live streams
+
+```sh
+polish simulate examples/streaming-runtime.polishd
+```
+
+This synthetic example covers eight success/failure cases. Its capacity values are
+illustrative assumptions. It introduces:
+
+- `stream` with `provider = self_hosted product = redis_stream`, hosted on a
+  singleton `compute_pool`. Each consumer has an independent cursor; reads do not
+  remove messages. This differs from competing queue consumers.
+- `request.concurrent_connections` for concurrent long-lived listeners, separate
+  from HTTP `rate_rps`. Multiple consumed streams share their host's declared
+  `max_stream_connections`, minus optional `reserved_stream_connections`. Each
+  consumer edge uses one connection per client unless `connections_per_client`
+  declares another positive integer. These are declared connection assumptions,
+  not client-library socket measurements. Existing reusable cache pools and these
+  stream budgets are separate; reserve capacity for other Redis usage explicitly.
+- `consumer_lag_seconds` compared with `retention_messages` and declared
+  `source_rate_rps`. Required history is `ceil(lag × source_rate)`; delivery demand
+  is `concurrent_connections × source_rate`. A declared source rate requires a
+  `max_messages_rps` delivery bound when evaluating listeners. Readers must supply
+  concurrency for rate-based scenarios. Functional runs can omit capacity inputs.
+- Proxy `supports_streaming`, `response_buffering`, and optional
+  `max_client_connections`. A concurrent-stream scenario rejects explicit lack of
+  support or enabled buffering. Omitted proxy settings do not prove streaming
+  compatibility. Client limits are logical declared capacities, not a direct
+  translation of a proxy's worker/file-descriptor settings.
+- `volume` with `storage = persistent` or `ephemeral`. Services declare
+  `mounts Media { access = read_only }` or `read_write`; their operations may
+  `reads Media` / `writes Media`. Missing mounts fail compilation and writes through
+  read-only mounts fail simulation. Optional `used_mib`/`capacity_mib` check declared
+  occupancy; rate-based access requires `max_ops_rps`. No file data is created and
+  writes do not automatically grow modeled occupancy.
+- `external_service` for API dependencies without a modeled local host. Use
+  `invokes Provider { protocol = https }`; TLS must be declared on the provider.
+  Rate scenarios require its measured/contractual `max_requests_rps`. Provider
+  response content, failure branches, tokens, costs, and retry timing are not modeled.
+- Service/operation `reads` and `writes` to object stores, with transport checks
+  and a `max_requests_rps` bound for rate scenarios. Container registries still use
+  `image_from`. S3 website endpoints reject writes.
+
+LocalStack profiles (`provider = localstack`, `product = sqs` or `s3`) use HTTP
+explicitly and remain separate from AWS profiles. They model API dependencies and
+declared budgets, not emulator durability, redrive, visibility renewal, or cloud
+parity. Existing MSK and Kinesis streams retain managed placement; Redis streams
+require a compute host. `self_hosted` database-cluster profiles now include
+`postgres`, `elasticsearch`, and `opensearch`, with relational/document contracts,
+appropriate TCP/TLS or HTTP/HTTPS transports, and declared `max_ops_rps` budgets.
+They do not simulate query plans, index semantics, or transaction isolation.
+
+Self-hosted Redis cache declarations may omit `capacity_mib` for functional checks
+with no dataset or request rate. Capacity scenarios still require the missing
+measurements; omission does not mean infinite memory or throughput.
+
+The live-stream model is steady-state and deterministic. It does not calculate
+end-to-end latency, audio timing, byte bandwidth, proxy idle timeout, retries,
+backpressure, failover, or graceful connection draining. Redis approximate trimming
+is represented by an explicit conservative retention bound. A connection-budget
+failure identifies a violated assumption, not the time of a predicted outage.

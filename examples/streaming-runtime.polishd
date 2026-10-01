@@ -1,0 +1,65 @@
+// Synthetic capacity assumptions, not measurements from a deployed application.
+architecture StreamingRuntime {
+  gateway Edge { tls = true tls_termination = true upstream_protocol = http routes_to Proxy }
+  load_balancer Proxy {
+    supports_streaming = true response_buffering = false max_client_connections = 1000
+    routes_to Api
+  }
+  compute_pool Apps { provider = self_hosted vcpus = 2 memory_gib = 4 instances = 1 }
+  compute_pool RedisHost { instances = 1 max_stream_connections = 100 reserved_stream_connections = 10 }
+  stream Audio {
+    provider = self_hosted product = redis_stream hosted_on RedisHost
+    retention_messages = 160 source_rate_rps = 8 max_messages_rps = 1000
+  }
+  stream Events {
+    provider = self_hosted product = redis_stream hosted_on RedisHost
+    retention_messages = 2000 source_rate_rps = 1 max_messages_rps = 1000
+  }
+  volume Media { storage = persistent capacity_mib = 1000 used_mib = 100 max_ops_rps = 100 }
+  artifact_store Objects { provider = localstack product = s3 max_requests_rps = 100 }
+  queue Jobs { provider = localstack product = sqs queue_type = standard max_messages_rps = 100 }
+  external_service Speech { tls = true max_requests_rps = 100 }
+  service Api {
+    hosted_on Apps
+    mounts Media { access = read_only }
+    operation live { method = GET path = "/live" consumes_from Audio }
+    operation both { method = GET path = "/both" consumes_from Audio consumes_from Events }
+    operation file { method = GET path = "/file" cpu_ms = 1 reads Media }
+    operation upload { method = POST path = "/upload" cpu_ms = 1 writes Media }
+    operation job { method = POST path = "/job" cpu_ms = 1 publishes_to Jobs }
+    operation restore { method = POST path = "/restore" cpu_ms = 1 reads Objects }
+    operation speech { method = POST path = "/speech" cpu_ms = 1 invokes Speech { protocol = https } }
+  }
+}
+scenario "Independent stream readers fit" {
+  request { entry = Edge protocol = https path = "/live" concurrent_connections = 40 consumer_lag_seconds = 10 }
+  expect { outcome = success reaches Audio reaches RedisHost }
+}
+scenario "Audio and SSE share backend connection capacity" {
+  request { entry = Edge protocol = https path = "/both" concurrent_connections = 50 }
+  expect { outcome = error error = STREAM_CONNECTIONS_EXCEEDED }
+}
+scenario "Slow reader has lost retained audio" {
+  request { entry = Edge protocol = https path = "/live" concurrent_connections = 1 consumer_lag_seconds = 21 }
+  expect { outcome = error error = STREAM_RETENTION_EXCEEDED }
+}
+scenario "Mounted media reads succeed" {
+  request { entry = Edge protocol = https path = "/file" rate_rps = 10 }
+  expect { outcome = success accesses Media }
+}
+scenario "Read-only mount rejects writes" {
+  request { entry = Edge protocol = https method = POST path = "/upload" }
+  expect { outcome = error error = VOLUME_READ_ONLY }
+}
+scenario "Local queue uses HTTP" {
+  request { entry = Edge protocol = https method = POST path = "/job" rate_rps = 10 }
+  expect { outcome = success reaches Jobs }
+}
+scenario "Object restore uses local emulator" {
+  request { entry = Edge protocol = https method = POST path = "/restore" rate_rps = 10 }
+  expect { outcome = success accesses Objects }
+}
+scenario "External API invocation" {
+  request { entry = Edge protocol = https method = POST path = "/speech" rate_rps = 10 }
+  expect { outcome = success reaches Speech }
+}

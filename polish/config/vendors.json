@@ -15,7 +15,8 @@
     "self_hosted": [
       "caches.json",
       "databases.json",
-      "graphql.json"
+      "graphql.json",
+      "streams.json"
     ],
     "kong": [
       "gateway.json"
@@ -30,6 +31,9 @@
       "messaging.json",
       "memorystore.json",
       "cloudsql.json"
+    ],
+    "localstack": [
+      "services.json"
     ]
   }
 }

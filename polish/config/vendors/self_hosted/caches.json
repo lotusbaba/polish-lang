@@ -5,9 +5,7 @@
       "defaults": {
         "engine": "redis"
       },
-      "required": [
-        "capacity_mib"
-      ],
+      "required": [],
       "properties": [
         "engine",
         "capacity_mib",

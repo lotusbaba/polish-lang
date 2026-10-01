@@ -54,6 +54,21 @@
       "suggestions": [
         "Evaluate an explicit cache-error fallback and its downstream capacity. A miss fallback does not automatically handle cache errors."
       ]
+    },
+    "STREAM_CONNECTIONS_EXCEEDED": {
+      "suggestions": [
+        "Account for each long-lived reader and shared backend connection. More API instances do not reduce total Redis reader connections; compare a shared fan-out reader with measured backend capacity."
+      ]
+    },
+    "STREAM_RETENTION_EXCEEDED": {
+      "suggestions": [
+        "Compare consumer lag against the declared retention window. Increase retention only with a corresponding memory budget, or reduce consumer lag."
+      ]
+    },
+    "STREAMING_UNSUPPORTED": {
+      "suggestions": [
+        "Check response buffering and streaming support on every proxy in the request path."
+      ]
     }
   }
 }

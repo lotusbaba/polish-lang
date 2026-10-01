@@ -13,6 +13,7 @@ from .budgets import ResourceBudgets
 from .vendors import DynamoCapacity, product_profile
 from .platforms import PlatformModel
 from .cache_connections import CacheConnections
+from .runtime_resources import RuntimeResources
 
 
 @dataclass
@@ -54,6 +55,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
     platforms = PlatformModel(arch, request, result, fail)
 
     cache_connections = CacheConnections(arch, result, budgets, fail)
+    runtime = RuntimeResources(arch, request, result, fail)
     pulled = set()
     asset_loads = {}
 
@@ -106,6 +108,8 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
             fail('TLS_UNSUPPORTED', node_name=node.name)
         result.trace.append(f"{protocol.upper()} accepted by {node.name}")
         platforms.policy(node)
+        if node.kind in {"cdn", "gateway", "load_balancer"}:
+            runtime.proxy(node)
 
     def select_route(node, path):
         routes = arch.outgoing(node.name, "routes_to")
@@ -140,7 +144,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
         """Each dependency gets its own route traversal, separate from call recursion."""
         hosts = arch.outgoing(destination.name, "hosted_on")
         host = arch.nodes[hosts[0].target] if hosts else destination
-        protocol = edge.properties.get("protocol", "http" if edge.kind == "invokes" else "tcp")
+        protocol = edge.properties.get("protocol", product_profile(arch, destination).get("request_protocol", "http" if edge.kind == "invokes" or destination.kind == "artifact_store" else "tcp"))
         target = arch.nodes[edge.target]
         path = edge.properties.get("path", target.properties.get("path", "/"))
         current = edge.properties.get("via", host.name)
@@ -174,11 +178,20 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
         for edge in arch.outgoing(node.name):
             target = arch.nodes[edge.target]
             if edge.kind == "invokes":
-                service = target if target.kind == "service" else arch.nodes[target.parent]
+                service = target if target.kind in {"service", "external_service"} else arch.nodes[target.parent]
                 result.trace.append(f"{node.name} invokes {target.name}")
                 transport(edge, service)
                 visit(target.name, "http", network=False)
             elif edge.kind in {"reads", "writes"}:
+                if target.kind in {"volume", "artifact_store"}:
+                    if target.kind == "artifact_store":
+                        transport(edge, target)
+                    runtime.access(target, edge)
+                    mark(target)
+                    if target.name not in result.accessed:
+                        result.accessed.append(target.name)
+                    result.trace.append(f"{node.name} {edge.kind} {target.name}")
+                    continue
                 if target.kind == "cache":
                     transport(edge, target)
                     cache_connections.charge(edge, target)
@@ -245,6 +258,11 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
             elif edge.kind in {"publishes_to", "consumes_from", "submits_to"}:
                 connection(target, product_profile(arch, target).get("request_protocol", "tls" if target.kind == "stream" else "https"))
                 mark(target)
+                if product_profile(arch, target).get("stream_mode") == "broadcast":
+                    hosts = arch.outgoing(target.name, "hosted_on")
+                    connection(arch.nodes[hosts[0].target], product_profile(arch, target).get("request_protocol", "tcp"))
+                    runtime.broadcast(target, edge)
+                    continue
                 platforms.asynchronous(target, edge)
                 if edge.kind == "publishes_to" and target.kind == "topic":
                     from .model import Edge
@@ -327,6 +345,9 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
                 budgets.service(service, node)
                 dependencies(service)
                 dependencies(node)
+            elif node.kind == "external_service":
+                runtime.access(node, None)
+                result.trace.append(f"External API {name} accepted invocation")
             elif node.kind == "artifact_store":
                 if node.properties.get("kind") == "container_registry":
                     fail("REGISTRY_NOT_WEB_ORIGIN", node=name)
@@ -401,6 +422,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
             fail("SCALING_MODEL_INCOMPLETE", detail="image_pulls_rps requires an executed service with image_from")
         capacity_model.evaluate(other_workload=any(arch.nodes[name].properties.get("product") == "s3" for name in asset_loads))
         cache_connections.evaluate()
+        runtime.evaluate()
         budgets.evaluate()
         dynamo_capacity.evaluate()
         platforms.evaluate()

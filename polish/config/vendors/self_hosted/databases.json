@@ -45,6 +45,72 @@
         "max_ops_rps": "positive"
       },
       "capacity_model": "operations"
+    },
+    "postgres": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "postgres",
+        "storage": "persistent"
+      },
+      "required": [],
+      "properties": [
+        "max_ops_rps"
+      ],
+      "property_types": {
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations",
+      "database_kinds": [
+        "relational"
+      ],
+      "protocols": [
+        "tcp",
+        "tls"
+      ]
+    },
+    "elasticsearch": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "elasticsearch",
+        "storage": "persistent"
+      },
+      "required": [],
+      "properties": [
+        "max_ops_rps"
+      ],
+      "property_types": {
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations",
+      "database_kinds": [
+        "document"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ]
+    },
+    "opensearch": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "opensearch",
+        "storage": "persistent"
+      },
+      "required": [],
+      "properties": [
+        "max_ops_rps"
+      ],
+      "property_types": {
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations",
+      "database_kinds": [
+        "document"
+      ],
+      "protocols": [
+        "http",
+        "https"
+      ]
     }
   },
   "sources": [

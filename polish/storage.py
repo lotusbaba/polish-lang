@@ -57,6 +57,11 @@ def validate_storage(arch, error, config):
         hosts = arch.outgoing(database.name, "hosted_on") if database else []
         if hosts and arch.nodes[hosts[0].target].properties.get("product") == "dynamodb":
             protocols = arch.aws["products"]["dynamodb"]["protocols"]
+        from .vendors import product_profile
+        if hosts and product_profile(arch, arch.nodes[hosts[0].target]).get("protocols"):
+            protocols = product_profile(arch, arch.nodes[hosts[0].target])["protocols"]
+        if target.kind == "artifact_store":
+            protocols = product_profile(arch, target).get("protocols", ["http", "https"])
         if "protocol" in p and p["protocol"] not in protocols:
             error('E_CONNECTION_3', line=edge.line, edge_kind=edge.kind, sorted_protocols=sorted(protocols))
         via = arch.nodes.get(p.get("via"))

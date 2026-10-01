@@ -954,6 +954,46 @@
         "node"
       ],
       "outcome": "error"
+    },
+    "STREAM_CONNECTIONS_EXCEEDED": {
+      "code": "STREAM_CONNECTIONS_EXCEEDED",
+      "phase": "simulation",
+      "message": "{node}: concurrent stream connections {demand} exceed capacity {capacity}.",
+      "parameters": [
+        "node",
+        "demand",
+        "capacity"
+      ],
+      "outcome": "error"
+    },
+    "STREAM_RETENTION_EXCEEDED": {
+      "code": "STREAM_RETENTION_EXCEEDED",
+      "phase": "simulation",
+      "message": "{node}: lag requires {demand} messages but retention is {capacity}.",
+      "parameters": [
+        "node",
+        "demand",
+        "capacity"
+      ],
+      "outcome": "error"
+    },
+    "STREAMING_UNSUPPORTED": {
+      "code": "STREAMING_UNSUPPORTED",
+      "phase": "simulation",
+      "message": "{node} cannot deliver the requested unbuffered stream.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
+    },
+    "VOLUME_READ_ONLY": {
+      "code": "VOLUME_READ_ONLY",
+      "phase": "simulation",
+      "message": "{node} cannot write to its read-only volume mount.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
     }
   }
 }

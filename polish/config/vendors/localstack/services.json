@@ -1,0 +1,62 @@
+{
+  "products": {
+    "sqs": {
+      "component": "queue",
+      "defaults": {
+        "tls": false
+      },
+      "required": [
+        "queue_type"
+      ],
+      "properties": [
+        "queue_type",
+        "visibility_timeout_seconds",
+        "retention_seconds",
+        "tls",
+        "max_backlog",
+        "consumer_rate_rps",
+        "max_messages_rps"
+      ],
+      "enums": {
+        "queue_type": [
+          "standard",
+          "fifo"
+        ]
+      },
+      "property_types": {
+        "visibility_timeout_seconds": "nonnegative_integer",
+        "retention_seconds": "positive_integer",
+        "max_backlog": "nonnegative_integer",
+        "consumer_rate_rps": "nonnegative",
+        "max_messages_rps": "positive"
+      },
+      "protocols": [
+        "http"
+      ],
+      "request_protocol": "http"
+    },
+    "s3": {
+      "component": "artifact_store",
+      "defaults": {
+        "kind": "object_store",
+        "tls": false
+      },
+      "required": [],
+      "properties": [
+        "max_requests_rps"
+      ],
+      "property_types": {
+        "max_requests_rps": "positive"
+      },
+      "enums": {
+        "kind": [
+          "object_store"
+        ]
+      },
+      "protocols": [
+        "http"
+      ],
+      "request_protocol": "http"
+    }
+  }
+}

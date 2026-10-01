@@ -28,7 +28,8 @@
         "max_backlog": "nonnegative_integer",
         "consumer_rate_rps": "nonnegative",
         "max_messages_rps": "positive"
-      }
+      },
+      "managed": true
     },
     "sqs": {
       "component": "queue",

@@ -57,7 +57,8 @@
           "provisioned",
           "on_demand"
         ]
-      }
+      },
+      "managed": true
     }
   },
   "sources": [

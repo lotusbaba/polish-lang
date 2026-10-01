@@ -10,7 +10,10 @@
         "tls_termination",
         "upstream_protocol",
         "provider",
-        "product"
+        "product",
+        "supports_streaming",
+        "response_buffering",
+        "max_client_connections"
       ],
       "parents": []
     },
@@ -21,7 +24,10 @@
         "tls_termination",
         "upstream_protocol",
         "provider",
-        "product"
+        "product",
+        "supports_streaming",
+        "response_buffering",
+        "max_client_connections"
       ],
       "parents": []
     },
@@ -31,7 +37,10 @@
         "tls_termination",
         "upstream_protocol",
         "provider",
-        "product"
+        "product",
+        "supports_streaming",
+        "response_buffering",
+        "max_client_connections"
       ],
       "parents": []
     },

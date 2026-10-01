@@ -36,7 +36,7 @@ def load_vendors(root, manifest):
                 types = product.get("property_types", {})
                 if not isinstance(types, dict) or any(value not in {"positive", "nonnegative", "positive_integer", "nonnegative_integer"} for value in types.values()):
                     raise ValueError(f"Invalid property_types for {name}")
-                if "request_protocol" in product and product["request_protocol"] not in {"https", "tls"}:
+                if "request_protocol" in product and product["request_protocol"] not in {"http", "https", "tcp", "tls"}:
                     raise ValueError(f"Invalid request_protocol for {name}")
                 enums = product.get("enums", {})
                 if not isinstance(enums, dict) or any(not isinstance(values, list) or not all(isinstance(v, str) for v in values) for values in enums.values()):

@@ -9,7 +9,9 @@
         "cpu_utilization",
         "memory_utilization",
         "vcpus",
-        "memory_gib"
+        "memory_gib",
+        "max_stream_connections",
+        "reserved_stream_connections"
       ],
       "parents": []
     },
@@ -56,11 +58,21 @@
         "product"
       ],
       "parents": []
+    },
+    "volume": {
+      "properties": [
+        "storage",
+        "capacity_mib",
+        "used_mib",
+        "max_ops_rps"
+      ],
+      "parents": []
     }
   },
   "hosting": {
     "service": "compute_pool",
     "cache": "compute_pool",
-    "database": "database_cluster"
+    "database": "database_cluster",
+    "stream": "compute_pool"
   }
 }

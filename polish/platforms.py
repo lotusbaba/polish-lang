@@ -31,6 +31,8 @@ class PlatformModel:
 
     def cache(self, node):
         p = node.properties
+        if "capacity_mib" not in p and "dataset_mib" not in p and "rate_rps" not in self.request:
+            return
         if "capacity_mib" not in p:
             self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{node.name} needs a cache product profile and capacity_mib")
         if p.get("dataset_mib", 0) > p["capacity_mib"]:

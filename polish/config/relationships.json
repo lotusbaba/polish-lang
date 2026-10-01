@@ -18,7 +18,8 @@
       ],
       "targets": [
         "operation",
-        "service"
+        "service",
+        "external_service"
       ]
     },
     "reads": {
@@ -32,7 +33,9 @@
         "document",
         "keyspace",
         "table",
-        "cache"
+        "cache",
+        "artifact_store",
+        "volume"
       ]
     },
     "writes": {
@@ -46,7 +49,9 @@
         "document",
         "keyspace",
         "table",
-        "cache"
+        "cache",
+        "artifact_store",
+        "volume"
       ]
     },
     "loaded_from": {
@@ -66,7 +71,8 @@
         "cache",
         "database",
         "service",
-        "gateway"
+        "gateway",
+        "stream"
       ],
       "targets": [
         "compute_pool",
@@ -138,6 +144,14 @@
       "targets": [
         "queue"
       ]
+    },
+    "mounts": {
+      "sources": [
+        "service"
+      ],
+      "targets": [
+        "volume"
+      ]
     }
   },
   "connection_options": {
@@ -177,6 +191,12 @@
     ],
     "image_from": [
       "authorized"
+    ],
+    "mounts": [
+      "access"
+    ],
+    "consumes_from": [
+      "connections_per_client"
     ]
   },
   "connection_protocols": {
@@ -222,6 +242,10 @@
     "on_error": [
       "fallback",
       "fail"
+    ],
+    "access": [
+      "read_only",
+      "read_write"
     ]
   },
   "connection_entries": [

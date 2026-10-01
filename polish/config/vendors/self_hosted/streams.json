@@ -1,0 +1,32 @@
+{
+  "products": {
+    "redis_stream": {
+      "component": "stream",
+      "defaults": {
+        "engine": "redis"
+      },
+      "required": [
+        "retention_messages"
+      ],
+      "properties": [
+        "engine",
+        "tls",
+        "retention_messages",
+        "source_rate_rps",
+        "max_messages_rps"
+      ],
+      "property_types": {
+        "retention_messages": "positive_integer",
+        "source_rate_rps": "positive",
+        "max_messages_rps": "positive"
+      },
+      "host_required": true,
+      "protocols": [
+        "tcp",
+        "tls"
+      ],
+      "request_protocol": "tcp",
+      "stream_mode": "broadcast"
+    }
+  }
+}

@@ -243,7 +243,7 @@ def compile_source(source: str, *, config_dir=None) -> Compilation:
         if any(s.name == name for s in arch.scenarios):
             error('E_DUPLICATE_SCENARIO', line=scenario.line, name=name)
         arch.scenarios.append(scenario)
-        for key in req.keys() - {"entry", "protocol", "actor", "authenticated", "method", "path", "destination", "action", "via", "rate_rps", "scale", "cache_result", "burst_requests", "query_depth", "query_cost", "window_seconds", "image_pulls_rps"}:
+        for key in req.keys() - {"entry", "protocol", "actor", "authenticated", "method", "path", "destination", "action", "via", "rate_rps", "scale", "cache_result", "burst_requests", "query_depth", "query_cost", "window_seconds", "image_pulls_rps", "concurrent_connections", "consumer_lag_seconds"}:
             error('E_SCENARIO', line=scenario.line, key=key)
         for key in exp.keys() - {"outcome", "error"}:
             error('E_SCENARIO_2', line=scenario.line, key=key)
@@ -289,4 +289,6 @@ def compile_source(source: str, *, config_dir=None) -> Compilation:
     validate_scaling(arch, error)
     from .cache_connections import validate_cache_connections
     validate_cache_connections(arch, error)
+    from .runtime_resources import validate_runtime
+    validate_runtime(arch, error)
     return Compilation(arch, diagnostics)

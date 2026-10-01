@@ -23,6 +23,13 @@
       "parents": [
         "service"
       ]
+    },
+    "external_service": {
+      "properties": [
+        "tls",
+        "max_requests_rps"
+      ],
+      "parents": []
     }
   }
 }

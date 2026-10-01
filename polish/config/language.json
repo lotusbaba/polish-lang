@@ -12,7 +12,9 @@
     "request_collapsing",
     "shielding",
     "tls",
-    "tls_termination"
+    "tls_termination",
+    "supports_streaming",
+    "response_buffering"
   ],
   "methods": [
     "DELETE",
