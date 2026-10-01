@@ -10,6 +10,7 @@ class Diagnostic:
     message: str
     line: int = 1
     column: int = 1
+    context: dict | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -57,6 +58,10 @@ class Architecture:
     errors: dict[str, Any] = field(default_factory=dict)
     aws: dict[str, Any] = field(default_factory=dict)
     cloud: dict[str, Any] = field(default_factory=dict)
+    diagnostic_details: dict[str, Any] = field(default_factory=dict)
+    rules: dict[str, Any] = field(default_factory=dict)
+    model_inputs: dict[str, Any] = field(default_factory=dict)
+    component_definitions: dict[str, Any] = field(default_factory=dict)
     nodes: dict[str, Node] = field(default_factory=dict)
     edges: list[Edge] = field(default_factory=list)
     scenarios: list[Scenario] = field(default_factory=list)

@@ -126,10 +126,10 @@ def plan(before_source, after_source, *, config_dir=None, scenario_name=None):
                                           status=status, before=old, after=new))
         if not new['passed']:
             code = new.get('error') or 'ASSERTION_FAILED'
-            report['findings'].append(dict(category='needs_information' if code == 'SCALING_MODEL_INCOMPLETE' else 'required',
+            report['findings'].append(dict(category='needs_information' if any(d.get('rule') == 'SCALING_MODEL_INCOMPLETE' for d in new.get('diagnostics', [])) or code == 'SCALING_MODEL_INCOMPLETE' else 'required',
                 scenario=scenario.name, status=status, code=code,
                 evidence=new.get('trace', [])[-1:] + new.get('failures', []) + [d['message'] for d in new.get('diagnostics', [])],
-                budgets=new.get('budgets', []), capacity=new.get('capacity', []),
+                budgets=new.get('budgets', []), capacity=new.get('capacity', []), diagnostics=new.get('diagnostics', []),
                 suggestions=rules.get(code, {}).get('suggestions', ['Review this scenario and its failing requirement.'])))
     observed = {name for comparison in report['comparisons'] for name in comparison['after'].get('reached', [])}
     unobserved = sorted({n['component'] for n in report['impact'] if n['component'] in after.architecture.nodes} - observed)

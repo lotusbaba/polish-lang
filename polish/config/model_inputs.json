@@ -1,0 +1,95 @@
+{
+  "model_inputs": {
+    "traffic": {
+      "rate": {
+        "scope": "request",
+        "field": "rate_rps",
+        "default": null
+      }
+    },
+    "rate_policy": {
+      "limit": {
+        "scope": "node",
+        "field": "limit_rps",
+        "default": null
+      },
+      "burst_limit": {
+        "scope": "node",
+        "field": "burst_limit",
+        "default": null
+      },
+      "burst": {
+        "scope": "request",
+        "field": "burst_requests",
+        "default": 0
+      }
+    },
+    "graphql_depth": {
+      "demand": {
+        "scope": "request",
+        "field": "query_depth",
+        "default": null
+      },
+      "limit": {
+        "scope": "node",
+        "field": "max_query_depth",
+        "default": null
+      }
+    },
+    "graphql_cost": {
+      "demand": {
+        "scope": "request",
+        "field": "query_cost",
+        "default": null
+      },
+      "limit": {
+        "scope": "node",
+        "field": "max_query_cost",
+        "default": null
+      }
+    },
+    "cache_dataset": {
+      "size": {
+        "scope": "node",
+        "field": "dataset_mib",
+        "default": 0
+      }
+    },
+    "batch_capacity": {
+      "count": {
+        "scope": "node",
+        "field": "workers",
+        "default": null
+      },
+      "utilization": {
+        "scope": "node",
+        "field": "cpu_utilization",
+        "default": 0.7
+      }
+    },
+    "partitioned_messages": {
+      "count": {
+        "scope": "node",
+        "field": "shards",
+        "default": null
+      }
+    },
+    "message_backlog": {
+      "background_consumption": {
+        "scope": "node",
+        "field": "consumer_rate_rps",
+        "default": 0
+      },
+      "limit": {
+        "scope": "node",
+        "field": "max_backlog",
+        "default": null
+      },
+      "window": {
+        "scope": "request",
+        "field": "window_seconds",
+        "default": 1
+      }
+    }
+  }
+}

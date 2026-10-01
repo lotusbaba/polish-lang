@@ -24,9 +24,16 @@ def validate_errors(catalog):
                 raise ValueError(f"Unsupported template placeholder in {rule}: {field}")
 
 
-def render_error(catalog, rule, **values):
+def render_error(catalog, rule, *, architecture=None, subject=None, **values):
     try:
+        if getattr(values.get("detail"), "context", {}).get("configuration_error"):
+            return "E_CONFIG", str(values["detail"])
         entry = catalog[rule]
+        if architecture is not None:
+            from .diagnostics import error_override
+            override, context = error_override(architecture, rule, values, subject)
+            if override:
+                return entry["code"], override["message"].format(**{**context, **values})
         return entry["code"], entry["message"].format(**values)
     except (KeyError, ValueError, TypeError) as exc:
         # This must work even when the bundled catalog itself has been edited.

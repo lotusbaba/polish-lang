@@ -921,8 +921,12 @@ Language definitions live in **`polish/config/`** and ship with the installed pa
 | `relationships.json` | Allowed source/target types, connection options and protocols |
 | `language.json` | Boolean properties, field types, HTTP methods, shared enums and integer settings |
 | `vendors.json` | Vendor catalog manifest |
+| `vendor_schema.json` | Vendor profile metadata validation contracts |
 | `vendors/aws/*.json` | AWS EC2, RDS, DynamoDB, and ELB profiles, capabilities, and source metadata |
 | `errors.json` | Compiler, storage, simulator, and CLI error codes, message templates, and failure outcomes |
+| `diagnostics.json` | Model diagnostic details, required input bindings, and display labels |
+| `model_inputs.json` | Model field mappings and optional numeric defaults |
+| `rules.json`, `rules/*.rules` | Executable model formulas, conditions, defaults, and validation rules |
 
 For example, `databases.json` declares the storage kinds and their child types:
 
@@ -950,12 +954,12 @@ override. Missing files and malformed definitions produce `E_CONFIG` diagnostics
 Run `python -m polish` from the repository to use edited source configuration, or
 reinstall the package to refresh the installed CLI's bundled copy.
 
-Configuration defines the vocabulary and permitted declarations. Execution
-algorithms—TLS handshakes in the model, routing, quorum calculations, durability
-requirements, and replica consistency checks—remain Python implementations.
-Adding a metadata property or database kind does not invent new runtime behavior.
-New executable component types, protocols, or durability semantics still require
-corresponding simulator support; changing an enum alone does not implement them.
+JSON configuration defines vocabulary, permitted declarations, and input bindings.
+The files in `config/rules/` define executable model behavior: formulas, conditions,
+defaults, routing, TLS, durability, replication, and capacity checks. Python parses
+architecture definitions, supplies graph/data operations, and interprets the rules.
+Adding a property alone still does not invent behavior: define how the relevant
+rule consumes it. New host capabilities require interpreter support.
 
 Error definitions use stable rule identifiers. For example:
 
@@ -980,9 +984,134 @@ The simulator retains the catalog from compilation, including custom
 `--config-dir` definitions. If you change an emitted error code, update any
 scenario `expect { error = ... }` assertions that reference it. Existing scenario
 definitions remain in `.polishd` files. The conditions that detect errors still
-live in the compiler/simulator; the catalog describes their diagnostics, not
-arbitrary executable checks. `E_CONFIG` is a built-in fallback so a broken or
+live in `config/rules/`; the error catalog describes their diagnostics, while
+rule files define executable checks. `E_CONFIG` is a built-in fallback so a broken or
 missing error catalog can itself be reported.
+
+Diagnostic wording can also belong to the component or vendor product that defines
+an object. Resolution is **product override → component override → shared catalog**.
+For example, the EMR definition in `vendors/aws/messaging.json` contains:
+
+```json
+"diagnostics": {
+  "BATCH_CPU_INPUTS": {
+    "message": "{component} '{name}' using {provider}/{product} requires {missing_fields} for {model}."
+  }
+}
+```
+
+When only worker CPU capacity is missing, this produces:
+
+```text
+Incomplete scaling model: batch_cluster 'Analytics' using aws/emr requires worker_vcpus for batch_cpu.
+```
+
+The same override can live on `components.batch_cluster` in `hosts.json` as a
+class default. Overrides may target detail rules in `diagnostics.json` or complete
+error rules such as `TLS_UNSUPPORTED` in `errors.json`. They change wording, not
+error codes, failure outcomes, or the conditions that trigger checks. Object-level
+errors resolve the object's product, or its parent/host product when applicable;
+architecture-level errors use the shared catalog.
+
+Detail templates and overrides accept plain named placeholders from their
+parameter contract plus `name`, `component`, `provider`, `product`, `model`, and
+`missing_fields`. Unlike the original error catalog, these templates do not allow
+format conversions. Invalid templates and input contracts produce `E_CONFIG`.
+Custom config directories must include `diagnostics.json`.
+
+Named input contracts describe fields and labels separately from message text.
+Component and product overrides can replace an `inputs` binding by semantic name,
+while retaining its scope. Platform capacity calculations consume these bindings
+for batch CPU, cache memory, and cache/database/message throughput. Renamed fields
+must also be declared in the component/product property schema. This is not a
+general mechanism for renaming every language field. For other models or changes
+to their algorithms, edit the corresponding configured rule file.
+
+Compiler diagnostics and simulation JSON include structured context identifying
+the object, component, provider/product, rule, and template origin. Missing-input
+diagnostics additionally list the specific missing fields. Planner findings retain
+simulation diagnostics and classify incomplete models by stable rule identifiers,
+so changing a public error code does not change their classification.
+
+Platform calculations resolve numeric DSL fields through configuration too. For
+example, `model_inputs.json` maps the backlog model's semantic input
+`background_consumption` to `consumer_rate_rps`, and the traffic model's `rate` to
+`rate_rps`. Rate and burst limits, GraphQL depth/cost, cache dataset size, batch
+worker counts/utilization, partition counts, and backlog windows/limits use the
+same mechanism. Required capacity bindings remain in `diagnostics.json` so their
+calculations and missing-input messages share one definition.
+
+A component or product can override a mapping using `model_inputs`. For example,
+an SQS product with a declared, nonnegative `drain_rps` property could define:
+
+```json
+"model_inputs": {
+  "message_backlog": {
+    "background_consumption": {
+      "scope": "node",
+      "field": "drain_rps",
+      "default": 0
+    }
+  }
+}
+```
+
+The simulator then uses `drain_rps` in the actual backlog calculation:
+`max(0, arrivals - min(capacity, consumers + background_consumption)) × window`.
+Precedence is product → component → shared model inputs. Missing optional fields
+use the configured default; missing required numeric inputs produce a diagnostic.
+Model names, semantic input names, scopes, and optionality are fixed contracts;
+unknown models, invalid mappings, and invalid numeric defaults produce `E_CONFIG`.
+Custom config directories must include `model_inputs.json`.
+
+Input bindings are consumed by `rules/platforms.rules`; model names such as
+`rate_policy` and `traffic`, and formula variables such as `demand`, live there too.
+CPU, connection, storage, broadcast, and vendor models have their own rule files.
+Declare new scenario fields in `language.json` under `request_properties`, and add
+validation and execution rules that consume them.
+
+### Executable model rules
+
+`rules.json` maps stable engine hook modules to files in `config/rules/`:
+
+| Rule file | Owns |
+| --- | --- |
+| `platforms.rules` | Rate/burst limits, GraphQL checks, cache and message throughput, backlog, batch capacity |
+| `scaling.rules` | CPU demand, hardware selection, instance counts, scaling validation |
+| `budgets.rules` | Memory feasibility and database connection pools |
+| `cache_connections.rules` | Client pool distribution and per-node cache connection budgets |
+| `runtime_resources.rules` | Broadcast connections, retention, local volumes, external service budgets |
+| `vendors.rules`, `cloud_products.rules` | Vendor contracts, defaults, cross-product constraints, DynamoDB capacity |
+| `storage.rules` | Durability, replicas, storage and connection contracts |
+| `simulator.rules` | Request traversal, routing, TLS, authorization, dependency invocation, assertions |
+| `compiler_contracts.rules` | Architecture and scenario semantic validation |
+
+For example, the backlog formula is configured in `platforms.rules`:
+
+```python
+consumed = min(self.message_limit(node), self.loads.get((name, "consume"), 0) + inputs.get("background_consumption"))
+backlog = max(0, arrivals - consumed) * window
+```
+
+Changing this formula in a custom configuration changes the simulated result;
+no edit to `platforms.py` is required. That Python module is now a lifecycle adapter.
+The same applies to the other model adapters. Existing `.polishd` files keep their
+syntax and behavior with the bundled rules.
+
+Rule files use a restricted Python-shaped syntax, interpreted by
+`rule_engine.py` rather than imported or passed to Python `eval`/`exec`. Supported
+operations include arithmetic, comparisons, conditionals, loops, local functions,
+collections, and registered graph/model/diagnostic operations. Imports, private
+attribute access, arbitrary host calls, and unsupported syntax are rejected.
+Execution has an instruction budget and guards against oversized numeric and
+sequence operations. Rule failures produce `E_CONFIG`; a broken rule does not count
+as a passing scenario even when an error was expected.
+
+Keep exported hook names and signatures unchanged. Model names, field bindings,
+formulas, thresholds, and conditions inside those hooks belong to configuration.
+Custom config directories must include `rules.json` and every referenced rule file;
+these are also included in the wheel. A compiled architecture retains its rules,
+so simulation and planning use the same configuration that was validated.
 
 - `polish/grammar.lark`: formal syntax, parsed using [Lark](https://lark-parser.readthedocs.io/en/stable/).
 - `polish/model.py`: typed component graph, fields, diagnostics, scenarios.

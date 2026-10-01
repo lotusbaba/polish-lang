@@ -1,0 +1,40 @@
+# Restricted Polish model rules; interpreted, never executed as Python.
+def validate_cloud_products(arch, error):
+
+    def invalid(node, message):
+        error('E_VENDOR', line=node.line, detail=message)
+    for node in arch.nodes.values():
+        p = node.properties
+        provider, product = (p.get('provider'), p.get('product'))
+        if provider == 'aws' and product == 'kinesis':
+            if p.get('capacity_mode') == 'provisioned':
+                if 'shards' not in p:
+                    invalid(node, describe(arch, 'CLOUD_PRODUCTS_PROVISIONED_KINESIS_REQUIRES_SHARDS', node))
+                if 'max_messages_rps' in p:
+                    invalid(node, describe(arch, 'CLOUD_PRODUCTS_PROVISIONED_KINESIS_USES_MESSAGES_PER_SHARD_RPS', node))
+            elif any((k in p for k in ('shards', 'messages_per_shard_rps'))):
+                invalid(node, describe(arch, 'CLOUD_PRODUCTS_ON_DEMAND_KINESIS_MANAGES_SHARDS_DECLARE_MAX', node))
+        if provider == 'gcp' and product == 'pubsub_subscription':
+            incoming = arch.incoming(node.name, 'delivers_to')
+            if len(incoming) != 1 or arch.nodes[incoming[0].source].properties.get('product') != 'pubsub_topic':
+                invalid(node, describe(arch, 'CLOUD_PRODUCTS_A_PUB_SUB_SUBSCRIPTION_REQUIRES_EXACTLY_ONE', node))
+        if node.kind == 'database':
+            hosts = arch.outgoing(node.name, 'hosted_on')
+            if len(hosts) == 1:
+                host = arch.nodes[hosts[0].target]
+                if host.properties.get('provider') == 'gcp' and host.properties.get('product') == 'cloudsql_postgres':
+                    if number(p.get('read_replicas', 0)) and p.get('read_replicas', 0) > 0:
+                        p.setdefault('replication', 'asynchronous')
+                        if p['replication'] != 'asynchronous':
+                            invalid(node, describe(arch, 'CLOUD_PRODUCTS_CLOUD_SQL_READ_REPLICAS_ARE_ASYNCHRONOUS', node))
+    for edge in arch.edges:
+        src, dst = (arch.nodes[edge.source], arch.nodes[edge.target])
+        sp, dp = (src.properties, dst.properties)
+        if edge.kind == 'delivers_to':
+            pair = (sp.get('provider'), sp.get('product'), dp.get('provider'), dp.get('product'))
+            if pair not in {('aws', 'sns', 'aws', 'sqs'), ('gcp', 'pubsub_topic', 'gcp', 'pubsub_subscription')}:
+                invalid(src, describe(arch, 'CLOUD_PRODUCTS_SUPPORTED_DELIVERIES_ARE_SNS_TO_SQS_AND', src))
+            if sp.get('product') == 'sns' and sp.get('topic_type') == 'standard' and (dp.get('queue_type') == 'fifo'):
+                invalid(src, describe(arch, 'CLOUD_PRODUCTS_STANDARD_SNS_TOPICS_CANNOT_DELIVER_TO_FIFO', src))
+        if edge.kind == 'publishes_to' and dp.get('provider') == 'gcp' and (dp.get('product') == 'pubsub_subscription'):
+            invalid(dst, describe(arch, 'CLOUD_PRODUCTS_PUBLISH_TO_THE_PUB_SUB_TOPIC_NOT', dst))

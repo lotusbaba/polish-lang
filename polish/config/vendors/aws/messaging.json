@@ -88,6 +88,11 @@
         "workers": "positive_integer",
         "worker_vcpus": "positive_integer",
         "cpu_utilization": "positive"
+      },
+      "diagnostics": {
+        "BATCH_CPU_INPUTS": {
+          "message": "{component} '{name}' using {provider}/{product} requires {missing_fields} for {model}."
+        }
       }
     }
   },

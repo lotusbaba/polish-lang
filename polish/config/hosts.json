@@ -50,7 +50,12 @@
         "provider",
         "product"
       ],
-      "parents": []
+      "parents": [],
+      "diagnostics": {
+        "BATCH_CPU_INPUTS": {
+          "message": "Batch cluster '{name}' needs {missing_fields} to simulate CPU capacity."
+        }
+      }
     },
     "topic": {
       "properties": [

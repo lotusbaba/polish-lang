@@ -1,0 +1,42 @@
+{
+  "vendor_schema": {
+    "list_fields": [
+      "required",
+      "properties",
+      "protocols",
+      "forbidden",
+      "database_forbidden",
+      "database_kinds"
+    ],
+    "required_lists": [
+      "required",
+      "properties"
+    ],
+    "boolean_fields": [
+      "managed",
+      "host_required",
+      "path_routing",
+      "terminate_encrypted"
+    ],
+    "numeric_fields": {
+      "read_chunk_bytes": "positive_integer",
+      "write_chunk_bytes": "positive_integer",
+      "max_item_bytes": "positive_integer",
+      "eventual_read_factor": "fraction"
+    },
+    "enums": {
+      "request_protocol": [
+        "http",
+        "https",
+        "tcp",
+        "tls"
+      ]
+    },
+    "property_types": [
+      "positive",
+      "nonnegative",
+      "positive_integer",
+      "nonnegative_integer"
+    ]
+  }
+}

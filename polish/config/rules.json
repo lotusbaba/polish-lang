@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "platforms": "platforms.rules",
+    "budgets": "budgets.rules",
+    "scaling": "scaling.rules",
+    "cache_connections": "cache_connections.rules",
+    "runtime_resources": "runtime_resources.rules",
+    "cloud_products": "cloud_products.rules",
+    "storage": "storage.rules",
+    "vendors": "vendors.rules",
+    "simulator": "simulator.rules",
+    "compiler_contracts": "compiler_contracts.rules"
+  }
+}

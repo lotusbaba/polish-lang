@@ -50,5 +50,26 @@
       "tcp",
       "tls"
     ]
-  }
+  },
+  "request_properties": [
+    "action",
+    "actor",
+    "authenticated",
+    "burst_requests",
+    "cache_result",
+    "concurrent_connections",
+    "consumer_lag_seconds",
+    "destination",
+    "entry",
+    "image_pulls_rps",
+    "method",
+    "path",
+    "protocol",
+    "query_cost",
+    "query_depth",
+    "rate_rps",
+    "scale",
+    "via",
+    "window_seconds"
+  ]
 }

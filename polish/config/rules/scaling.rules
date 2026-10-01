@@ -1,0 +1,106 @@
+# Restricted Polish model rules; interpreted, never executed as Python.
+def hardware(arch, host):
+    if host.properties.get('provider') == 'self_hosted':
+        return {k: host.properties.get(k) for k in ('vcpus', 'memory_gib')}
+    return arch.aws['instances'].get(host.properties.get('instance_type'), {})
+
+def validate_scaling(arch, error):
+    for node in arch.nodes.values():
+        p = node.properties
+        profile = product_profile(arch, node)
+        if p.get('provider') == 'self_hosted' and node.kind == 'compute_pool':
+            for key in ('vcpus', 'memory_gib'):
+                if not number(p.get(key), True):
+                    error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_SELF_HOSTED_COMPUTE_REQUIRES_POSITIVE', node, key=key))
+            if 'instance_type' in p:
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_SELF_HOSTED_COMPUTE_USES_VCPUS_AND_MEMORY', node))
+            if not number(p.get('cpu_utilization', 0.7), True) or p.get('cpu_utilization', 0.7) > 1:
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_CPU_UTILIZATION_MUST_BE_IN', node))
+        for key in ('base_memory_mib', 'memory_per_request_mib', 'duration_ms'):
+            if key in p and (not number(p[key])):
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_MUST_BE_FINITE_AND_NONNEGATIVE', node, node_name=node.name, key=key))
+        for key in ('connection_pool_size', 'max_connections', 'reserved_connections'):
+            if key in p and (type(p[key]) is not int or p[key] < (0 if key == 'reserved_connections' else 1)):
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_INVALID_ON', node, key=key, node_name=node.name))
+        if 'reserved_connections' in p and ('max_connections' not in p or (type(p['reserved_connections']) is int and type(p.get('max_connections')) is int and (p['reserved_connections'] >= p['max_connections']))):
+            error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_RESERVED_CONNECTIONS_MUST_BE_LESS_THAN_MAX', node))
+        if 'memory_utilization' in p and (not number(p['memory_utilization'], True) or p['memory_utilization'] > 1):
+            error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_MEMORY_UTILIZATION_MUST_BE_IN', node))
+        if 'cpu_ms' in p and (not number(p['cpu_ms'])):
+            error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_CPU_MS_MUST_BE_FINITE_AND_NONNEGATIVE', node, node_name=node.name))
+        if node.kind in {'compute_pool', 'database_cluster'} and p.get('provider') != 'self_hosted' and (not profile.get('capacity_model')) and (p.get('product') != 'dynamodb') and any((k in p for k in ('provider', 'instance_type', 'cpu_utilization'))):
+            if p.get('provider') != 'aws' or p.get('instance_type') not in arch.aws['instances']:
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_NEEDS_PROVIDER_AWS_AND_A_SUPPORTED_INSTANCE', node, node_name=node.name))
+            utilization = p.get('cpu_utilization', 0.7)
+            if not number(utilization, True) or utilization > 1:
+                error('E_SCALING', line=node.line, detail=describe(arch, 'SCALING_CPU_UTILIZATION_MUST_BE_IN_2', node))
+    for edge in arch.edges:
+        if 'job_cpu_ms' in edge.properties and (not number(edge.properties['job_cpu_ms'], True)):
+            error('E_SCALING', line=edge.line, detail=describe(arch, 'SCALING_JOB_CPU_MS_MUST_BE_FINITE_AND', arch.nodes.get(edge.target)))
+        if 'cpu_ms' in edge.properties and (not number(edge.properties['cpu_ms'])):
+            error('E_SCALING', line=edge.line, detail=describe(arch, 'SCALING_CONNECTION_CPU_MS_MUST_BE_FINITE_AND', arch.nodes.get(edge.target)))
+    for scenario in arch.scenarios:
+        p = scenario.request
+        if p.get('cache_result', 'miss') not in {'hit', 'miss', 'error'}:
+            error('E_SCALING', line=scenario.line, detail=describe(arch, 'SCALING_CACHE_RESULT_MUST_BE_HIT_MISS_OR', None))
+        for key in ('burst_requests', 'query_depth', 'query_cost', 'window_seconds'):
+            if key in p and (not number(p[key], key == 'window_seconds')):
+                error('E_SCALING', line=scenario.line, detail=describe(arch, 'SCALING_INVALID', None, key=key))
+        if 'rate_rps' in p and (not number(p['rate_rps'], True)):
+            error('E_SCALING', line=scenario.line, detail=describe(arch, 'SCALING_RATE_RPS_MUST_BE_FINITE_AND_POSITIVE', None))
+        if 'image_pulls_rps' in p and (not number(p['image_pulls_rps'], True)):
+            error('E_SCALING', line=scenario.line, detail=describe(arch, 'SCALING_IMAGE_PULLS_RPS_MUST_BE_FINITE_AND', None))
+        if p.get('scale', 'minimum') not in {'minimum', 'maximum'} or ('scale' in p and 'rate_rps' not in p):
+            error('E_SCALING', line=scenario.line, detail=describe(arch, 'SCALING_SCALE_REQUIRES_RATE_RPS_AND_MUST_BE', None))
+
+def initialize(self, arch, request, result, fail):
+    self.arch, self.request, self.result, self.fail = (arch, request, result, fail)
+    self.resources = {}
+
+def charge(self, workload, cost, role=None):
+    if 'rate_rps' not in self.request:
+        return
+    host = self.arch.nodes[self.arch.outgoing(workload.name, 'hosted_on')[0].target]
+    p = host.properties
+    if cost is None or not hardware(self.arch, host).get('vcpus'):
+        self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_NEEDS_CPU_MS_AND_AN_AWS_HOST', workload, workload_name=workload.name))
+    if role:
+        if workload.properties.get('kind') != 'relational' or p.get('engine') != 'postgres':
+            self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_DATABASE_CPU_SCALING_CURRENTLY_SUPPORTS_RELATIONAL_STORES', host))
+        databases = [e for e in self.arch.edges if e.kind == 'hosted_on' and e.target == host.name]
+        if len(databases) != 1:
+            self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_POSTGRES_SCALING_REQUIRES_A_DEDICATED_DATABASE_CLUSTER', host))
+        count = workload.properties.get('read_replicas', 0) if role == 'replica' else 1
+    else:
+        count = p.get('instances')
+        if count is None:
+            self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_REQUIRES_INSTANCES', host, host_name=host.name))
+        if isinstance(count, tuple):
+            count = count[1] if self.request.get('scale') == 'maximum' else count[0]
+    key = host.name + (':' + role if role else '')
+    profile = hardware(self.arch, host)
+    per_instance = profile['vcpus'] * 1000 * p.get('cpu_utilization', 0.7)
+    record = self.resources.setdefault(key, {'resource': key, 'instance_type': p.get('instance_type', 'self_hosted'), 'instances': count, 'vcpus_per_instance': profile['vcpus'], 'cpu_utilization': p.get('cpu_utilization', 0.7), 'demand_cpu_ms_per_second': 0, 'capacity_cpu_ms_per_second': count * per_instance, 'per_instance_cpu_ms_per_second': per_instance, 'horizontal_scaling': role != 'primary'})
+    record['demand_cpu_ms_per_second'] += self.request['rate_rps'] * cost
+    if not number(record['demand_cpu_ms_per_second']):
+        self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_CPU_DEMAND_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE', host))
+
+def evaluate(self, other_workload=False):
+    if 'rate_rps' in self.request and (not self.resources) and (not other_workload):
+        self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'SCALING_NO_SERVICE_OR_POSTGRESQL_WORKLOAD_WAS_EXECUTED', None))
+    overloaded = []
+    for record in self.resources.values():
+        demand = record['demand_cpu_ms_per_second']
+        capacity = record['capacity_cpu_ms_per_second']
+        required = math.ceil(demand / record['per_instance_cpu_ms_per_second'])
+        record['required_instances'] = required
+        record['overloaded'] = demand > capacity and (not math.isclose(demand, capacity, rel_tol=1e-12))
+        self.result.capacity.append(record)
+        self.result.trace.append(f"CPU {record['resource']}: demand={demand:g} CPU-ms/s; capacity={capacity:g}; instances={record['instances']}; required={required}")
+        if record['overloaded']:
+            overloaded.append(record)
+    if overloaded:
+        record = overloaded[0]
+        if not record['horizontal_scaling']:
+            self.fail('PRIMARY_CAPACITY_EXCEEDED', resource=record['resource'], demand=record['demand_cpu_ms_per_second'], capacity=record['capacity_cpu_ms_per_second'])
+        self.fail('CAPACITY_EXCEEDED', resource=record['resource'], demand=record['demand_cpu_ms_per_second'], capacity=record['capacity_cpu_ms_per_second'], required=record['required_instances'])

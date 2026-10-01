@@ -1,0 +1,171 @@
+# Restricted Polish model rules; interpreted, never executed as Python.
+def prepare_products(arch, error, config):
+    products = arch.aws['products']
+    for node in arch.nodes.values():
+        p = node.properties
+        name = p.get('product')
+        if name is None:
+            if node.kind in {'queue', 'stream', 'batch_cluster', 'topic'}:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_REQUIRES_A_PRODUCT_PROFILE', node, node_kind=node.kind))
+            profile = arch.aws['instances'].get(p.get('instance_type'))
+            if profile and profile['family'] != 'ec2':
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_RDS_INSTANCE_CLASSES_REQUIRE_PRODUCT_RDS_POSTGRES', node))
+            continue
+        product = arch.cloud.get(p.get('provider'), {}).get('products', {}).get(name)
+        if not product or node.kind != product['component']:
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_UNSUPPORTED_PRODUCT_PROVIDER_COMPONENT_COMBINATION_ON', node, node_name=node.name))
+            continue
+        if name == 's3' and p.get('endpoint') == 'website':
+            p.setdefault('tls', False)
+            if p.get('tls') is not False:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_S_WEBSITE_ENDPOINTS_DO_NOT_SUPPORT_TLS', node))
+        for key, value in product['defaults'].items():
+            if key in {'engine', 'storage'} and key in p and (p[key] != value):
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_REQUIRES', node, value_name=name, key=key, value=value))
+            p.setdefault(key, value)
+        for key in product['required']:
+            if key not in p:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_REQUIRES_2', node, node_name=node.name, key=key))
+        for key, kind in product.get('property_types', {}).items():
+            if key in p and (not number(p[key], kind.startswith('positive')) or (kind.endswith('integer') and type(p[key]) is not int)):
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MUST_BE', node, node_name=node.name, key=key, kind=kind))
+        for key, values in product.get('enums', {}).items():
+            if key in p and p[key] not in values:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_INVALID_ON', node, key=key, node_name=node.name))
+        if product.get('host_required') and len(arch.outgoing(node.name, 'hosted_on')) != 1:
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_REQUIRES_A_COMPUTE_HOST', node, node_name=node.name))
+        if product.get('managed') and arch.outgoing(node.name, 'hosted_on'):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_IS_MANAGED_OMIT_HOSTED_ON', node, node_name=node.name))
+        if p.get('rate_limiting') is False and any((k in p for k in ('limit_rps', 'burst_limit'))):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_RATE_LIMIT_SETTINGS_CONFLICT_WITH_RATE_LIMITING', node))
+        if name == 'msk' and type(p.get('replication_factor')) is int and (type(p.get('brokers')) is int) and (p['replication_factor'] > p['brokers']):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MSK_REPLICATION_FACTOR_CANNOT_EXCEED_BROKERS', node))
+        if name == 'emr' and number(p.get('cpu_utilization', 0.7)) and (p.get('cpu_utilization', 0.7) > 1):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_EMR_CPU_UTILIZATION_MUST_NOT_EXCEED', node))
+        for key in product.get('forbidden', []):
+            if key in p:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MANAGES_DO_NOT_CONFIGURE_IT', node, value_name=name, key=key))
+        if 'instance_family' in product:
+            profile = arch.aws['instances'].get(p.get('instance_type'))
+            if not profile or profile['family'] != product['instance_family']:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_REQUIRES_AN_INSTANCE_PROFILE', node, value_name=name, product_instance_family=product['instance_family']))
+        if 'multi_az' in p and type(p['multi_az']) is not bool:
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MULTI_AZ_MUST_BE_BOOLEAN', node))
+        if product.get('path_routing') is False and any((e.pattern is not None for e in arch.outgoing(node.name, 'routes_to'))):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_NLB_CANNOT_INSPECT_HTTP_PATHS_USE_ROUTES', node))
+        if product.get('terminate_encrypted') and p.get('tls') and (not p.get('tls_termination')):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_ALB_HTTPS_REQUIRES_TLS_TERMINATION_TRUE', node))
+        if name == 'dynamodb':
+            mode = p.get('capacity_mode')
+            if mode not in {'provisioned', 'on_demand'}:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_DYNAMODB_CAPACITY_MODE_MUST_BE_PROVISIONED_OR', node))
+            for key in ('read_capacity_units', 'write_capacity_units', 'max_read_units', 'max_write_units'):
+                if key in p and (type(p[key]) is not int or p[key] < 1):
+                    error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MUST_BE_A_POSITIVE_INTEGER', node, key=key))
+                if key in p and (mode == 'provisioned') != (key in {'read_capacity_units', 'write_capacity_units'}):
+                    error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_CONFLICTS_WITH_CAPACITY', node, key=key, mode=mode))
+            if mode == 'provisioned' and (not {'read_capacity_units', 'write_capacity_units'} <= p.keys()):
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_PROVISIONED_DYNAMODB_REQUIRES_READ_CAPACITY_UNITS_AND', node))
+    validate_cloud_products(arch, error)
+    for node in arch.nodes.values():
+        images = arch.outgoing(node.name, 'image_from')
+        if len(images) > 1:
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_A_SERVICE_CAN_HAVE_ONLY_ONE_IMAGE', node))
+    for edge in arch.edges:
+        target = arch.nodes[edge.target]
+        registry = target.properties.get('kind') == 'container_registry'
+        if edge.kind == 'image_from':
+            if not registry:
+                error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_IMAGE_FROM_REQUIRES_A_CONTAINER_REGISTRY', arch.nodes.get(edge.target)))
+            if 'authorized' in edge.properties and type(edge.properties['authorized']) is not bool:
+                error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_IMAGE_FROM_AUTHORIZED_MUST_BE_BOOLEAN', arch.nodes.get(edge.target)))
+        elif registry and edge.kind in {'loaded_from', 'routes_to'}:
+            error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_CONTAINER_REGISTRIES_CANNOT_SERVE_FRONTEND_ASSETS', arch.nodes.get(edge.target)))
+    for node in arch.nodes.values():
+        if node.kind != 'database':
+            continue
+        hosts = arch.outgoing(node.name, 'hosted_on')
+        if len(hosts) != 1:
+            continue
+        host = arch.nodes[hosts[0].target]
+        product = product_profile(arch, host)
+        if not product:
+            continue
+        if node.properties.get('kind') not in product.get('database_kinds', []):
+            error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_HAS_AN_INCOMPATIBLE_DATABASE_KIND', node, node_name=node.name))
+        if product.get('capacity_model') == 'operations':
+            node.properties.setdefault('tls', host.properties.get('tls', False))
+            node.properties.setdefault('durability', 'disk')
+        for key in product.get('database_forbidden', []):
+            if key in node.properties:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_MANAGED_DYNAMODB_DOES_NOT_EXPOSE', node, key=key))
+        if host.properties.get('product') == 'rds_postgres':
+            node.properties.setdefault('tls', True)
+            node.properties.setdefault('durability', 'disk')
+            if type(node.properties.get('read_replicas', 0)) is int and node.properties.get('read_replicas', 0) > 0:
+                node.properties.setdefault('replication', 'asynchronous')
+                if node.properties['replication'] != 'asynchronous':
+                    error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_RDS_READ_REPLICAS_USE_ASYNCHRONOUS_REPLICATION_MULTI', node))
+        if host.properties.get('product') == 'dynamodb':
+            node.properties.setdefault('tls', True)
+            node.properties.setdefault('durability', 'disk')
+            if 'partitions' in node.properties and node.properties['partitions'] != 'managed':
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_DYNAMODB_PARTITIONS_MUST_BE_MANAGED', node))
+            if len([e for e in arch.edges if e.kind == 'hosted_on' and e.target == host.name]) != 1:
+                error('E_VENDOR', line=node.line, detail=describe(arch, 'VENDORS_USE_ONE_DYNAMODB_PRODUCT_HOST_PER_LOGICAL', node))
+    for edge in arch.edges:
+        if edge.kind not in {'reads', 'writes'}:
+            continue
+        target = arch.nodes[edge.target]
+        if target.kind == 'cache':
+            if set(edge.properties) - {'via', 'protocol', 'path', 'pool_size', 'pool_scope', 'pool_distribution', 'on_miss', 'on_error'}:
+                error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_UNSUPPORTED_CACHE_EDGE_OPTION_USE_TRANSPORT_CLIENT', arch.nodes.get(edge.target)))
+            continue
+        db = target if target.kind == 'database' else arch.nodes.get(target.parent)
+        hosts = arch.outgoing(db.name, 'hosted_on') if db else []
+        dynamo = bool(hosts and arch.nodes[hosts[0].target].properties.get('product') == 'dynamodb')
+        if dynamo:
+            edge.properties.setdefault('protocol', 'https')
+            if any((k in edge.properties for k in ('read_from', 'cpu_ms'))):
+                error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_DYNAMODB_USES_ITEM_BYTES_AND_MANAGED_READS', arch.nodes.get(edge.target)))
+            size = edge.properties.get('item_bytes')
+            if size is not None and (type(size) is not int or not 1 <= size <= products['dynamodb']['max_item_bytes']):
+                error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_DYNAMODB_ITEM_BYTES_MUST_BE_BETWEEN_AND', arch.nodes.get(edge.target)))
+        elif 'item_bytes' in edge.properties:
+            error('E_VENDOR', line=edge.line, detail=describe(arch, 'VENDORS_ITEM_BYTES_CAPACITY_MODELING_REQUIRES_DYNAMODB', arch.nodes.get(edge.target)))
+
+def initialize(self, arch, request, result, fail):
+    self.arch, self.request, self.result, self.fail = (arch, request, result, fail)
+    self.demand = {}
+
+def charge(self, database, edge, host):
+    if 'rate_rps' not in self.request:
+        return
+    size = edge.properties.get('item_bytes')
+    if size is None:
+        self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'VENDORS_DYNAMODB_CALLS_REQUIRE_ITEM_BYTES_FOR_CAPACITY', host))
+    product = self.arch.aws['products']['dynamodb']
+    read = edge.kind == 'reads'
+    units = math.ceil(size / product['read_chunk_bytes' if read else 'write_chunk_bytes'])
+    if read and edge.properties.get('consistency', 'eventual') == 'eventual':
+        units *= product['eventual_read_factor']
+    key = (database.name, edge.kind)
+    record = self.demand.setdefault(key, {'resource': database.name + ':' + edge.kind, 'kind': 'dynamodb', 'demand_units_per_second': 0})
+    capacity_key = ('read_capacity_units' if read else 'write_capacity_units') if host.properties['capacity_mode'] == 'provisioned' else 'max_read_units' if read else 'max_write_units'
+    if capacity_key not in host.properties:
+        self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'VENDORS_DYNAMODB_ON_DEMAND_SIMULATION_REQUIRES_AN_EXPLICIT', host, capacity_key=capacity_key))
+    record['capacity_units_per_second'] = host.properties[capacity_key]
+    record['demand_units_per_second'] += units * self.request['rate_rps']
+
+def evaluate(self):
+    failures = []
+    for record in self.demand.values():
+        demand, capacity = (record['demand_units_per_second'], record['capacity_units_per_second'])
+        record['overloaded'] = demand > capacity
+        self.result.budgets.append(record)
+        self.result.trace.append(f"DynamoDB {record['resource']}: demand={demand:g} units/s; capacity={capacity:g}")
+        if demand > capacity:
+            failures.append(record)
+    if failures:
+        record = failures[0]
+        self.fail('DYNAMODB_THROTTLED', resource=record['resource'], demand=record['demand_units_per_second'], capacity=record['capacity_units_per_second'])

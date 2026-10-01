@@ -9,12 +9,13 @@ def test_all_error_calls_have_matching_definitions():
     root = Path(__file__).resolve().parents[1] / "polish"
     catalog = load_config()["errors"]
     for filename, function, phase in (("compiler.py", "error", "compile"),
-                                      ("storage.py", "error", "compile"),
-                                      ("simulator.py", "fail", "simulation")):
+                                      ("config/rules/storage.rules", "error", "compile"),
+                                      ("config/rules/compiler_contracts.rules", "error", "compile"),
+                                      ("config/rules/simulator.rules", "fail", "simulation")):
         for node in ast.walk(ast.parse((root / filename).read_text())):
             if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name) or node.func.id != function:
                 continue
             definition = catalog[node.args[0].value]
             assert definition["phase"] == phase
-            actual = {arg.arg for arg in node.keywords} - {"line", "column"}
+            actual = {arg.arg for arg in node.keywords} - {"line", "column", "subject"}
             assert actual == set(definition["parameters"]), node.args[0].value

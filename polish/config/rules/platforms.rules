@@ -1,0 +1,107 @@
+# Restricted Polish model rules; interpreted, never executed as Python.
+def initialize(self, arch, request, result, fail):
+    self.arch, self.request, self.result, self.fail = (arch, request, result, fail)
+    self.hops, self.loads = ({}, {})
+
+def inputs(self, model, node):
+    return ModelInputs(self.arch, model, node, self.request, self.fail)
+
+def policy(self, node):
+    policy = self.inputs('rate_policy', node)
+    traffic = self.inputs('traffic', node)
+    self.hops[node.name] = self.hops.get(node.name, 0) + 1
+    calls = self.hops[node.name]
+    if policy.present('limit') and traffic.present('rate'):
+        demand = traffic.get('rate') * calls
+        limit = policy.get('limit')
+        self.result.trace.append(f'Rate policy {node.name}: {demand:g}/{limit:g} requests/s')
+        if demand > limit:
+            self.fail('RATE_LIMITED', node=node.name, demand=demand, limit=limit)
+    if policy.present('burst_limit') and policy.get('burst') * calls > policy.get('burst_limit'):
+        self.fail('RATE_LIMITED', node=node.name, demand=policy.get('burst') * calls, limit=policy.get('burst_limit'))
+    for model in ('graphql_depth', 'graphql_cost'):
+        query = self.inputs(model, node)
+        if query.present('limit'):
+            if not query.present('demand'):
+                self.fail('SCALING_MODEL_INCOMPLETE', detail=describe(self.arch, 'PLATFORMS_REQUIRES_SCENARIO', node, node_name=node.name, request_key=query.field('demand')))
+            if query.get('demand') > query.get('limit'):
+                self.fail('GRAPHQL_LIMIT_EXCEEDED', node=node.name)
+
+def add(self, node, kind, demand):
+    key = (node.name, kind)
+    self.loads[key] = self.loads.get(key, 0) + demand
+
+def cache(self, node):
+    dataset = self.inputs('cache_dataset', node)
+    traffic = self.inputs('traffic', node)
+    memory_field = resolve_definition(self.arch, 'CACHE_MEMORY_INPUTS', node)[0]['inputs']['memory']['field']
+    if memory_field not in node.properties and (not dataset.present('size')) and (not traffic.present('rate')):
+        return
+    inputs = require_inputs(self.arch, 'CACHE_MEMORY_INPUTS', node, self.fail)
+    if dataset.get('size') > inputs['memory']:
+        self.fail('CACHE_CAPACITY_EXCEEDED', node=node.name)
+    if traffic.present('rate'):
+        require_inputs(self.arch, 'CACHE_THROUGHPUT_INPUTS', node, self.fail)
+        self.add(node, 'cache_ops', traffic.get('rate'))
+
+def database(self, host):
+    traffic = self.inputs('traffic', host)
+    if traffic.present('rate'):
+        require_inputs(self.arch, 'DATABASE_THROUGHPUT_INPUTS', host, self.fail)
+        self.add(host, 'database_ops', traffic.get('rate'))
+
+def message_limit(self, node):
+    p = node.properties
+    if p.get('provider') == 'aws' and p.get('product') == 'kinesis' and (p.get('capacity_mode') == 'provisioned'):
+        inputs = require_inputs(self.arch, 'SHARD_THROUGHPUT_INPUTS', node, self.fail)
+        return self.inputs('partitioned_messages', node).get('count') * inputs['rate']
+    return require_inputs(self.arch, 'MESSAGE_THROUGHPUT_INPUTS', node, self.fail)['rate']
+
+def asynchronous(self, node, edge):
+    self.result.trace.append(f'{edge.source} {edge.kind} {node.name}')
+    traffic = self.inputs('traffic', node)
+    if not traffic.present('rate'):
+        return
+    if edge.kind == 'submits_to':
+        inputs = require_inputs(self.arch, 'BATCH_CPU_INPUTS', node, self.fail, edge=edge.properties)
+        self.add(node, 'batch_cpu', traffic.get('rate') * inputs['job_cost'])
+    else:
+        self.message_limit(node)
+        self.add(node, 'publish' if edge.kind == 'publishes_to' else 'consume', traffic.get('rate'))
+
+def evaluate(self):
+    failures = []
+    messaging = set()
+    for (name, kind), demand in self.loads.items():
+        node = self.arch.nodes[name]
+        p = node.properties
+        if kind in {'cache_ops', 'database_ops'}:
+            rule = 'CACHE_THROUGHPUT_INPUTS' if kind == 'cache_ops' else 'DATABASE_THROUGHPUT_INPUTS'
+            limit = require_inputs(self.arch, rule, node, self.fail)['rate']
+        elif kind == 'batch_cpu':
+            capacity = self.inputs('batch_capacity', node)
+            cpu_field = resolve_definition(self.arch, 'BATCH_CPU_INPUTS', node)[0]['inputs']['worker_cpu']['field']
+            limit = capacity.get('count') * p[cpu_field] * 1000 * capacity.get('utilization')
+        else:
+            if node.kind != 'topic':
+                messaging.add(name)
+            limit = self.message_limit(node)
+        record = {'resource': name, 'kind': kind, 'demand': demand, 'capacity': limit, 'overloaded': demand > limit}
+        self.result.budgets.append(record)
+        self.result.trace.append(f'{kind} {name}: demand={demand:g}; capacity={limit:g}')
+        if demand > limit:
+            failures.append((name, describe(self.arch, 'PLATFORMS_DEMAND_EXCEEDS_DECLARED_CAPACITY', self.arch.nodes[name], kind=kind, demand=demand, limit=limit)))
+    for name in sorted(messaging):
+        node = self.arch.nodes[name]
+        inputs = self.inputs('message_backlog', node)
+        arrivals = self.loads.get((name, 'publish'), 0)
+        consumed = min(self.message_limit(node), self.loads.get((name, 'consume'), 0) + inputs.get('background_consumption'))
+        window = inputs.get('window')
+        backlog = max(0, arrivals - consumed) * window
+        self.result.budgets.append({'resource': name, 'kind': 'backlog', 'messages': backlog})
+        self.result.trace.append(f'Backlog {name}: max(0, {arrivals:g} - {consumed:g}) × {window:g}s = {backlog:g} messages')
+        if inputs.present('limit') and backlog > inputs.get('limit'):
+            failures.append((name, describe(self.arch, 'PLATFORMS_BACKLOG_EXCEEDS_MESSAGES', node, backlog=backlog, p_max_backlog=inputs.get('limit'))))
+    if failures:
+        name, detail = failures[0]
+        self.fail('PLATFORM_CAPACITY_EXCEEDED', node=name, detail=detail)

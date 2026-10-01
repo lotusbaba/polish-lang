@@ -1,0 +1,725 @@
+{
+  "diagnostic_details": {
+    "BUDGETS_NEEDS_INSTANCES_FOR_RESOURCE_BUDGETS": {
+      "message": "{host_name} needs instances for resource budgets",
+      "parameters": [
+        "host_name"
+      ]
+    },
+    "BUDGETS_MEMORY_DEMAND_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE": {
+      "message": "Memory demand exceeds the supported numeric range",
+      "parameters": []
+    },
+    "BUDGETS_ALL_RESIDENTS_OF_NEED_BASE_MEMORY_MIB": {
+      "message": "All residents of {host_name} need base_memory_mib; unsupported residents must use a separate pool",
+      "parameters": [
+        "host_name"
+      ]
+    },
+    "BUDGETS_NEEDS_AN_AWS_PROFILE_FOR_MEMORY_MODELING": {
+      "message": "{host_name} needs an AWS profile for memory modeling",
+      "parameters": [
+        "host_name"
+      ]
+    },
+    "CACHE_CONNECTIONS_CACHE_RESERVED_CONNECTIONS_MUST_BE_LESS_THAN": {
+      "message": "Cache reserved connections must be less than its declared limit",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_HOSTED_CACHE_NODE_COUNT_COMES_FROM_HOST": {
+      "message": "Hosted cache node count comes from host instances; omit nodes",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_CACHE_FALLBACK_POLICY_REQUIRES_CACHE_INVOKES_RELATIONSHIPS": {
+      "message": "Cache fallback policy requires cache invokes relationships",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_MANAGED_CACHE_REQUIRES_NODES": {
+      "message": "Managed cache {cache_name} requires nodes",
+      "parameters": [
+        "cache_name"
+      ]
+    },
+    "CACHE_CONNECTIONS_HAS_AN_INVALID_INTEGER_VALUE": {
+      "message": "{node_name}.{key} has an invalid integer value",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "CACHE_CONNECTIONS_CACHE_POOL_AND_FAILURE_SETTINGS_REQUIRE_A": {
+      "message": "Cache pool and failure settings require a reads/writes cache edge",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_CACHE_POOLS_REQUIRE_POOL_SIZE_POOL_SCOPE": {
+      "message": "Cache pools require pool_size, pool_scope, and pool_distribution",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_POOL_SIZE_MUST_BE_A_POSITIVE_INTEGER": {
+      "message": "pool_size must be a positive integer",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_EDGES_FROM_ONE_SERVICE_TO_ONE_CACHE": {
+      "message": "Edges from one service to one cache must declare the same shared pool settings",
+      "parameters": []
+    },
+    "CACHE_CONNECTIONS_WORKER_SCOPED_POOLS_REQUIRE_SERVICE_WORKERS_PER": {
+      "message": "Worker-scoped pools require service workers_per_instance",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_PUBLISH_TO_THE_PUB_SUB_TOPIC_NOT": {
+      "message": "publish to the Pub/Sub topic, not its subscription",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_A_PUB_SUB_SUBSCRIPTION_REQUIRES_EXACTLY_ONE": {
+      "message": "a Pub/Sub subscription requires exactly one Pub/Sub topic delivers_to relationship",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_SUPPORTED_DELIVERIES_ARE_SNS_TO_SQS_AND": {
+      "message": "supported deliveries are SNS to SQS and Pub/Sub topic to Pub/Sub subscription",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_STANDARD_SNS_TOPICS_CANNOT_DELIVER_TO_FIFO": {
+      "message": "standard SNS topics cannot deliver to FIFO SQS queues",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_PROVISIONED_KINESIS_REQUIRES_SHARDS": {
+      "message": "provisioned Kinesis requires shards",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_PROVISIONED_KINESIS_USES_MESSAGES_PER_SHARD_RPS": {
+      "message": "provisioned Kinesis uses messages_per_shard_rps, not max_messages_rps",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_ON_DEMAND_KINESIS_MANAGES_SHARDS_DECLARE_MAX": {
+      "message": "on-demand Kinesis manages shards; declare max_messages_rps for simulation",
+      "parameters": []
+    },
+    "CLOUD_PRODUCTS_CLOUD_SQL_READ_REPLICAS_ARE_ASYNCHRONOUS": {
+      "message": "Cloud SQL read replicas are asynchronous",
+      "parameters": []
+    },
+    "PLATFORMS_DEMAND_EXCEEDS_DECLARED_CAPACITY": {
+      "message": "{kind} demand {demand} exceeds declared capacity {limit}",
+      "parameters": [
+        "kind",
+        "demand",
+        "limit"
+      ]
+    },
+    "PLATFORMS_BACKLOG_EXCEEDS_MESSAGES": {
+      "message": "backlog {backlog} exceeds {p_max_backlog} messages",
+      "parameters": [
+        "backlog",
+        "p_max_backlog"
+      ]
+    },
+    "PLATFORMS_REQUIRES_SCENARIO": {
+      "message": "{node_name} requires scenario {request_key}",
+      "parameters": [
+        "node_name",
+        "request_key"
+      ]
+    },
+    "RUNTIME_RESOURCES_VOLUMES_REQUIRE_STORAGE_PERSISTENT_OR_EPHEMERAL": {
+      "message": "Volumes require storage = persistent or ephemeral",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_MOUNTS_REQUIRES_ACCESS_READ_ONLY_OR_READ": {
+      "message": "mounts requires access = read_only or read_write",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_CONCURRENT_CONNECTIONS_MUST_BE_AN_INTEGER": {
+      "message": "concurrent_connections must be an integer",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_CONSUMER_LAG_SECONDS_REQUIRES_CONCURRENT_CONNECTIONS": {
+      "message": "consumer_lag_seconds requires concurrent_connections",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_BUDGET_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE": {
+      "message": "{node_name} budget exceeds the supported numeric range",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_AGGREGATE_DEMAND_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE": {
+      "message": "{node_name} aggregate demand exceeds the supported numeric range",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_CONCURRENT_CONNECTION_SCENARIOS_REQUIRE_A_BROADCAST_CONSUMER": {
+      "message": "Concurrent-connection scenarios require a broadcast consumer",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_MUST_BE_FINITE_AND_POSITIVE": {
+      "message": "{node_name}.{key} must be finite and positive",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "RUNTIME_RESOURCES_MUST_BE_FINITE_AND_NONNEGATIVE": {
+      "message": "{node_name}.{key} must be finite and nonnegative",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "RUNTIME_RESOURCES_STREAM_RESERVE_MUST_BE_BELOW_THE_DECLARED": {
+      "message": "Stream reserve must be below the declared connection capacity",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_REDIS_BROADCAST_STREAMS_CURRENTLY_REQUIRE_A_SINGLETON": {
+      "message": "Redis broadcast streams currently require a singleton compute host",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_CONNECTIONS_PER_CLIENT_REQUIRES_A_BROADCAST_STREAM": {
+      "message": "connections_per_client requires a broadcast stream and a positive integer",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_UNSUPPORTED_VOLUME_OBJECT_STORE_ACCESS_OPTION": {
+      "message": "Unsupported volume/object-store access option",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_USE_IMAGE_FROM_FOR_CONTAINER_REGISTRIES": {
+      "message": "Use image_from for container registries",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_MUST_BE_FINITE_AND": {
+      "message": "{key} must be finite and {positive_if_key_concurrent_connections_else_nonnegative}",
+      "parameters": [
+        "key",
+        "positive_if_key_concurrent_connections_else_nonnegative"
+      ]
+    },
+    "RUNTIME_RESOURCES_NEEDS_MAX_STREAM_CONNECTIONS": {
+      "message": "{host_name} needs max_stream_connections",
+      "parameters": [
+        "host_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_NEEDS": {
+      "message": "{node_name} needs {key}",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "RUNTIME_RESOURCES_EXCEEDS_DECLARED_CAPACITY": {
+      "message": "{record_kind} exceeds declared capacity",
+      "parameters": [
+        "record_kind"
+      ]
+    },
+    "RUNTIME_RESOURCES_REQUIRES_A_SERVICE_MOUNT_FOR": {
+      "message": "{edge_source} requires a service mount for {target_name}",
+      "parameters": [
+        "edge_source",
+        "target_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_BROADCAST_READERS_REQUIRE_CONCURRENT_CONNECTIONS_NOT_HTTP": {
+      "message": "Broadcast readers require concurrent_connections, not HTTP request rate alone",
+      "parameters": []
+    },
+    "RUNTIME_RESOURCES_NEEDS_SOURCE_RATE_RPS_TO_CALCULATE_RETAINED": {
+      "message": "{node_name} needs source_rate_rps to calculate retained history",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_RETENTION_DEMAND_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE": {
+      "message": "{node_name} retention demand exceeds the supported numeric range",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_NEEDS_MAX_MESSAGES_RPS_FOR_BROADCAST_DELIVERY": {
+      "message": "{node_name} needs max_messages_rps for broadcast delivery",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_NEEDS_MAX_MESSAGES_RPS": {
+      "message": "{node_name} needs max_messages_rps",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "RUNTIME_RESOURCES_NEEDS_CAPACITY_MIB": {
+      "message": "{node_name} needs capacity_mib",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "SCALING_RESERVED_CONNECTIONS_MUST_BE_LESS_THAN_MAX": {
+      "message": "reserved_connections must be less than max_connections",
+      "parameters": []
+    },
+    "SCALING_MEMORY_UTILIZATION_MUST_BE_IN": {
+      "message": "memory_utilization must be in (0, 1]",
+      "parameters": []
+    },
+    "SCALING_CPU_MS_MUST_BE_FINITE_AND_NONNEGATIVE": {
+      "message": "{node_name}.cpu_ms must be finite and nonnegative",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "SCALING_JOB_CPU_MS_MUST_BE_FINITE_AND": {
+      "message": "job_cpu_ms must be finite and positive",
+      "parameters": []
+    },
+    "SCALING_CONNECTION_CPU_MS_MUST_BE_FINITE_AND": {
+      "message": "Connection cpu_ms must be finite and nonnegative",
+      "parameters": []
+    },
+    "SCALING_CACHE_RESULT_MUST_BE_HIT_MISS_OR": {
+      "message": "cache_result must be hit, miss, or error",
+      "parameters": []
+    },
+    "SCALING_RATE_RPS_MUST_BE_FINITE_AND_POSITIVE": {
+      "message": "rate_rps must be finite and positive",
+      "parameters": []
+    },
+    "SCALING_IMAGE_PULLS_RPS_MUST_BE_FINITE_AND": {
+      "message": "image_pulls_rps must be finite and positive",
+      "parameters": []
+    },
+    "SCALING_SCALE_REQUIRES_RATE_RPS_AND_MUST_BE": {
+      "message": "scale requires rate_rps and must be minimum or maximum",
+      "parameters": []
+    },
+    "SCALING_NEEDS_CPU_MS_AND_AN_AWS_HOST": {
+      "message": "{workload_name} needs cpu_ms and an AWS host profile",
+      "parameters": [
+        "workload_name"
+      ]
+    },
+    "SCALING_CPU_DEMAND_EXCEEDS_THE_SUPPORTED_NUMERIC_RANGE": {
+      "message": "CPU demand exceeds the supported numeric range",
+      "parameters": []
+    },
+    "SCALING_NO_SERVICE_OR_POSTGRESQL_WORKLOAD_WAS_EXECUTED": {
+      "message": "No service or PostgreSQL workload was executed",
+      "parameters": []
+    },
+    "SCALING_SELF_HOSTED_COMPUTE_USES_VCPUS_AND_MEMORY": {
+      "message": "Self-hosted compute uses vcpus and memory_gib, not AWS instance_type",
+      "parameters": []
+    },
+    "SCALING_CPU_UTILIZATION_MUST_BE_IN": {
+      "message": "cpu_utilization must be in (0, 1]",
+      "parameters": []
+    },
+    "SCALING_MUST_BE_FINITE_AND_NONNEGATIVE": {
+      "message": "{node_name}.{key} must be finite and nonnegative",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "SCALING_INVALID_ON": {
+      "message": "Invalid {key} on {node_name}",
+      "parameters": [
+        "key",
+        "node_name"
+      ]
+    },
+    "SCALING_NEEDS_PROVIDER_AWS_AND_A_SUPPORTED_INSTANCE": {
+      "message": "{node_name} needs provider = aws and a supported instance_type",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "SCALING_CPU_UTILIZATION_MUST_BE_IN_2": {
+      "message": "cpu_utilization must be in (0, 1]",
+      "parameters": []
+    },
+    "SCALING_INVALID": {
+      "message": "Invalid {key}",
+      "parameters": [
+        "key"
+      ]
+    },
+    "SCALING_DATABASE_CPU_SCALING_CURRENTLY_SUPPORTS_RELATIONAL_STORES": {
+      "message": "Database CPU scaling currently supports relational stores on engine = postgres",
+      "parameters": []
+    },
+    "SCALING_POSTGRES_SCALING_REQUIRES_A_DEDICATED_DATABASE_CLUSTER": {
+      "message": "Postgres scaling requires a dedicated database_cluster per database",
+      "parameters": []
+    },
+    "SCALING_REQUIRES_INSTANCES": {
+      "message": "{host_name} requires instances",
+      "parameters": [
+        "host_name"
+      ]
+    },
+    "SCALING_SELF_HOSTED_COMPUTE_REQUIRES_POSITIVE": {
+      "message": "Self-hosted compute requires positive {key}",
+      "parameters": [
+        "key"
+      ]
+    },
+    "SIMULATOR_REQUIRES": {
+      "message": "{node_name} requires {key}",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "SIMULATOR_DEMAND_EXCEEDS_DECLARED_CAPACITY": {
+      "message": "demand {total} exceeds declared capacity {limit}",
+      "parameters": [
+        "total",
+        "limit"
+      ]
+    },
+    "SIMULATOR_IMAGE_PULLS_RPS_REQUIRES_AN_EXECUTED_SERVICE": {
+      "message": "image_pulls_rps requires an executed service with image_from",
+      "parameters": []
+    },
+    "SIMULATOR_CACHE_AT_NEEDS_AN_INVOKES_FALLBACK": {
+      "message": "Cache {cache_result} at {target_name} needs an invokes fallback",
+      "parameters": [
+        "cache_result",
+        "target_name"
+      ]
+    },
+    "VENDORS_UNSUPPORTED_PRODUCT_PROVIDER_COMPONENT_COMBINATION_ON": {
+      "message": "Unsupported product/provider/component combination on {node_name}",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "VENDORS_REQUIRES_A_COMPUTE_HOST": {
+      "message": "{node_name} requires a compute host",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "VENDORS_IS_MANAGED_OMIT_HOSTED_ON": {
+      "message": "{node_name} is managed; omit hosted_on",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "VENDORS_RATE_LIMIT_SETTINGS_CONFLICT_WITH_RATE_LIMITING": {
+      "message": "Rate limit settings conflict with rate_limiting = false",
+      "parameters": []
+    },
+    "VENDORS_MSK_REPLICATION_FACTOR_CANNOT_EXCEED_BROKERS": {
+      "message": "MSK replication_factor cannot exceed brokers",
+      "parameters": []
+    },
+    "VENDORS_EMR_CPU_UTILIZATION_MUST_NOT_EXCEED": {
+      "message": "EMR cpu_utilization must not exceed 1",
+      "parameters": []
+    },
+    "VENDORS_MULTI_AZ_MUST_BE_BOOLEAN": {
+      "message": "multi_az must be boolean",
+      "parameters": []
+    },
+    "VENDORS_NLB_CANNOT_INSPECT_HTTP_PATHS_USE_ROUTES": {
+      "message": "NLB cannot inspect HTTP paths; use routes_to",
+      "parameters": []
+    },
+    "VENDORS_ALB_HTTPS_REQUIRES_TLS_TERMINATION_TRUE": {
+      "message": "ALB HTTPS requires tls_termination = true",
+      "parameters": []
+    },
+    "VENDORS_A_SERVICE_CAN_HAVE_ONLY_ONE_IMAGE": {
+      "message": "A service can have only one image source",
+      "parameters": []
+    },
+    "VENDORS_HAS_AN_INCOMPATIBLE_DATABASE_KIND": {
+      "message": "{node_name} has an incompatible database kind",
+      "parameters": [
+        "node_name"
+      ]
+    },
+    "VENDORS_DYNAMODB_CALLS_REQUIRE_ITEM_BYTES_FOR_CAPACITY": {
+      "message": "DynamoDB calls require item_bytes for capacity simulation",
+      "parameters": []
+    },
+    "VENDORS_DYNAMODB_ON_DEMAND_SIMULATION_REQUIRES_AN_EXPLICIT": {
+      "message": "DynamoDB on-demand simulation requires an explicit {capacity_key}; it is not unlimited",
+      "parameters": [
+        "capacity_key"
+      ]
+    },
+    "VENDORS_REQUIRES_A_PRODUCT_PROFILE": {
+      "message": "{node_kind} requires a product profile",
+      "parameters": [
+        "node_kind"
+      ]
+    },
+    "VENDORS_RDS_INSTANCE_CLASSES_REQUIRE_PRODUCT_RDS_POSTGRES": {
+      "message": "RDS instance classes require product = rds_postgres",
+      "parameters": []
+    },
+    "VENDORS_S_WEBSITE_ENDPOINTS_DO_NOT_SUPPORT_TLS": {
+      "message": "S3 website endpoints do not support TLS",
+      "parameters": []
+    },
+    "VENDORS_REQUIRES": {
+      "message": "{value_name} requires {key} = {value}",
+      "parameters": [
+        "value_name",
+        "key",
+        "value"
+      ]
+    },
+    "VENDORS_REQUIRES_2": {
+      "message": "{node_name} requires {key}",
+      "parameters": [
+        "node_name",
+        "key"
+      ]
+    },
+    "VENDORS_MUST_BE": {
+      "message": "{node_name}.{key} must be {kind}",
+      "parameters": [
+        "node_name",
+        "key",
+        "kind"
+      ]
+    },
+    "VENDORS_INVALID_ON": {
+      "message": "Invalid {key} on {node_name}",
+      "parameters": [
+        "key",
+        "node_name"
+      ]
+    },
+    "VENDORS_MANAGES_DO_NOT_CONFIGURE_IT": {
+      "message": "{value_name} manages {key}; do not configure it",
+      "parameters": [
+        "value_name",
+        "key"
+      ]
+    },
+    "VENDORS_REQUIRES_AN_INSTANCE_PROFILE": {
+      "message": "{value_name} requires an {product_instance_family} instance profile",
+      "parameters": [
+        "value_name",
+        "product_instance_family"
+      ]
+    },
+    "VENDORS_DYNAMODB_CAPACITY_MODE_MUST_BE_PROVISIONED_OR": {
+      "message": "DynamoDB capacity_mode must be provisioned or on_demand",
+      "parameters": []
+    },
+    "VENDORS_PROVISIONED_DYNAMODB_REQUIRES_READ_CAPACITY_UNITS_AND": {
+      "message": "Provisioned DynamoDB requires read_capacity_units and write_capacity_units",
+      "parameters": []
+    },
+    "VENDORS_IMAGE_FROM_REQUIRES_A_CONTAINER_REGISTRY": {
+      "message": "image_from requires a container registry",
+      "parameters": []
+    },
+    "VENDORS_IMAGE_FROM_AUTHORIZED_MUST_BE_BOOLEAN": {
+      "message": "image_from authorized must be boolean",
+      "parameters": []
+    },
+    "VENDORS_CONTAINER_REGISTRIES_CANNOT_SERVE_FRONTEND_ASSETS": {
+      "message": "Container registries cannot serve frontend assets",
+      "parameters": []
+    },
+    "VENDORS_MANAGED_DYNAMODB_DOES_NOT_EXPOSE": {
+      "message": "Managed DynamoDB does not expose {key}",
+      "parameters": [
+        "key"
+      ]
+    },
+    "VENDORS_DYNAMODB_PARTITIONS_MUST_BE_MANAGED": {
+      "message": "DynamoDB partitions must be managed",
+      "parameters": []
+    },
+    "VENDORS_USE_ONE_DYNAMODB_PRODUCT_HOST_PER_LOGICAL": {
+      "message": "Use one DynamoDB product host per logical database/table capacity budget",
+      "parameters": []
+    },
+    "VENDORS_UNSUPPORTED_CACHE_EDGE_OPTION_USE_TRANSPORT_CLIENT": {
+      "message": "Unsupported cache edge option; use transport, client pool, or miss/error policy settings",
+      "parameters": []
+    },
+    "VENDORS_DYNAMODB_USES_ITEM_BYTES_AND_MANAGED_READS": {
+      "message": "DynamoDB uses item_bytes and managed reads, not cpu_ms or read_from",
+      "parameters": []
+    },
+    "VENDORS_DYNAMODB_ITEM_BYTES_MUST_BE_BETWEEN_AND": {
+      "message": "DynamoDB item_bytes must be between 1 and the configured item-size limit",
+      "parameters": []
+    },
+    "VENDORS_ITEM_BYTES_CAPACITY_MODELING_REQUIRES_DYNAMODB": {
+      "message": "item_bytes capacity modeling requires DynamoDB",
+      "parameters": []
+    },
+    "VENDORS_MUST_BE_A_POSITIVE_INTEGER": {
+      "message": "{key} must be a positive integer",
+      "parameters": [
+        "key"
+      ]
+    },
+    "VENDORS_CONFLICTS_WITH_CAPACITY": {
+      "message": "{key} conflicts with {mode} capacity",
+      "parameters": [
+        "key",
+        "mode"
+      ]
+    },
+    "VENDORS_RDS_READ_REPLICAS_USE_ASYNCHRONOUS_REPLICATION_MULTI": {
+      "message": "RDS read replicas use asynchronous replication; Multi-AZ standby is modeled separately",
+      "parameters": []
+    },
+    "BATCH_CPU_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "worker_cpu": {
+          "scope": "node",
+          "field": "worker_vcpus",
+          "label": "worker_vcpus"
+        },
+        "job_cost": {
+          "scope": "edge",
+          "field": "job_cpu_ms",
+          "label": "submits_to.job_cpu_ms"
+        }
+      },
+      "model": "batch_cpu"
+    },
+    "CACHE_MEMORY_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "memory": {
+          "scope": "node",
+          "field": "capacity_mib",
+          "label": "capacity_mib"
+        }
+      },
+      "model": "cache_memory"
+    },
+    "CACHE_THROUGHPUT_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "rate": {
+          "scope": "node",
+          "field": "max_ops_rps",
+          "label": "max_ops_rps"
+        }
+      },
+      "model": "cache_throughput"
+    },
+    "DATABASE_THROUGHPUT_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "rate": {
+          "scope": "node",
+          "field": "max_ops_rps",
+          "label": "max_ops_rps"
+        }
+      },
+      "model": "database_throughput"
+    },
+    "SHARD_THROUGHPUT_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "rate": {
+          "scope": "node",
+          "field": "messages_per_shard_rps",
+          "label": "messages_per_shard_rps"
+        }
+      },
+      "model": "shard_throughput"
+    },
+    "MESSAGE_THROUGHPUT_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "rate": {
+          "scope": "node",
+          "field": "max_messages_rps",
+          "label": "max_messages_rps"
+        }
+      },
+      "model": "message_throughput"
+    },
+    "REQUEST_MEMORY_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "memory": {
+          "scope": "node",
+          "field": "memory_per_request_mib",
+          "label": "memory_per_request_mib"
+        },
+        "duration": {
+          "scope": "node",
+          "field": "duration_ms",
+          "label": "duration_ms"
+        }
+      },
+      "model": "request_memory"
+    },
+    "DATABASE_CONNECTION_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "pool": {
+          "scope": "service",
+          "field": "connection_pool_size",
+          "label": "service.connection_pool_size"
+        },
+        "limit": {
+          "scope": "node",
+          "field": "max_connections",
+          "label": "database.max_connections"
+        }
+      },
+      "model": "database_connection"
+    },
+    "CACHE_CONNECTION_INPUTS": {
+      "message": "{component} '{name}' requires {missing_fields} for {model}.",
+      "parameters": [],
+      "inputs": {
+        "limit": {
+          "scope": "node",
+          "field": "max_connections_per_instance",
+          "label": "max_connections_per_instance"
+        },
+        "size": {
+          "scope": "edge",
+          "field": "pool_size",
+          "label": "pool_size"
+        },
+        "scope": {
+          "scope": "edge",
+          "field": "pool_scope",
+          "label": "pool_scope"
+        },
+        "distribution": {
+          "scope": "edge",
+          "field": "pool_distribution",
+          "label": "pool_distribution"
+        }
+      },
+      "model": "cache_connection"
+    },
+    "MODEL_INPUT_INVALID": {
+      "message": "{component} '{name}' requires a finite nonnegative number for {field} ({input_name}).",
+      "parameters": [
+        "field",
+        "input_name"
+      ]
+    }
+  }
+}

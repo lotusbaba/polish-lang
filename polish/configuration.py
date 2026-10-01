@@ -13,7 +13,7 @@ class ConfigurationError(ValueError):
 def load_config(directory=None):
     root = Path(directory) if directory is not None else files("polish").joinpath("config")
     result = {"components": {}}
-    names = ("databases", "services", "hosts", "frontend", "network", "language", "relationships", "errors", "vendors")
+    names = ("databases", "services", "hosts", "frontend", "network", "language", "relationships", "errors", "vendors", "diagnostics", "model_inputs", "rules", "vendor_schema")
     try:
         for name in names:
             data = json.loads(root.joinpath(name + ".json").read_text(encoding="utf-8"))
@@ -38,7 +38,15 @@ def load_config(directory=None):
             if configured["parameters"] != definition["parameters"] or configured["phase"] != definition["phase"]:
                 raise ValueError(f"Error definition {rule} changes its parameter or phase contract")
         from .vendors import load_vendors
-        result["cloud"] = load_vendors(root, result["vendors"])
+        result["cloud"] = load_vendors(root, result["vendors"], result["vendor_schema"])
+        from .diagnostics import validate_diagnostics
+        detail_baseline = json.loads(files("polish").joinpath("config/diagnostics.json").read_text())["diagnostic_details"]
+        validate_diagnostics(result, detail_baseline)
+        from .model_inputs import validate_model_inputs
+        input_baseline = json.loads(files("polish").joinpath("config/model_inputs.json").read_text())["model_inputs"]
+        validate_model_inputs(result, input_baseline)
+        from .rule_engine import load_rules
+        result["rules"] = load_rules(root, result["rules"])
         result["aws"] = result["cloud"]["aws"]
         aws = result["aws"]
         if aws["provider"] != "aws" or not isinstance(aws["instances"], dict):
@@ -58,7 +66,7 @@ def load_config(directory=None):
                 strings(definition[key])
             if set(definition["parents"]) - components.keys():
                 raise ValueError(f"Unknown parent of {kind}")
-        for key in ("network", "booleans", "methods", "field_types", "nonnegative_integers", "positive_integers", "artifact_kinds", "connection_entries"):
+        for key in ("network", "booleans", "methods", "field_types", "nonnegative_integers", "positive_integers", "artifact_kinds", "connection_entries", "request_properties"):
             strings(result[key])
         for key in ("database_kinds", "storage_enums", "enums", "loading", "connection_options", "connection_protocols", "connection_enums"):
             if not isinstance(result[key], dict):
