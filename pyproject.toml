@@ -19,6 +19,7 @@ Issues = "https://github.com/lotusbaba/polish-lang/issues"
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
 jev = ["httpx>=0.27,<1"]
+laya = ["laya==0.3.21"]
 
 [project.scripts]
 polish = "polish.cli:main"

@@ -1244,7 +1244,7 @@ Exit code 0 means all selected requirements pass on the proposed design, not tha
 all possible impacts have been tested. Hard constraints currently come from the
 compiler rules and scenario expectations.
 
-### Optional decision-model recommendations
+### Optional decision-model recommendations (Jev or local Laya)
 
 `plan --candidates FILE --objective TEXT --decision-provider jev` evaluates explicit
 candidate specifications against the baseline and proposal requirements, then uses
@@ -1257,6 +1257,15 @@ for connection pools, CPU scaling, and streaming retention. Reports separate
 uncalibrated choice probabilities from optional evidence-based historical accuracy
 intervals (`--choice-evaluation`). No confidence interval is invented for a single
 model response. The existing rule engine and ordinary simulations remain deterministic.
+
+For offline inference, use `--decision-provider laya --laya-checkpoint PATH`.
+The optional `laya` extra installs the runtime; `--laya-python` can select a separate
+ML environment. No key or automatic download is used. See [local Laya setup and
+commands](examples/recommendations/README.md#local-laya-provider) for checkpoint
+preparation, device selection, timeout behavior, and model identity.
+The [checkpoint comparison](examples/recommendations/README.md#browser-versus-general-english-checkpoint)
+records both local runs: neither selected the objective-aligned alternative in the
+connection-pool example. Treat these runs as integration evidence, not a quality guarantee.
 
 ## Cache connections and failure behavior
 

@@ -1,0 +1,2447 @@
+{
+  "ok": false,
+  "diagnostics": [],
+  "changes": {
+    "components": [
+      {
+        "component": "Apps",
+        "before": {
+          "name": "Apps",
+          "kind": "compute_pool",
+          "parent": null,
+          "properties": {
+            "provider": "aws",
+            "instance_type": "m7i.large",
+            "instances": 2
+          },
+          "requirements": [],
+          "fields": {}
+        },
+        "after": {
+          "name": "Apps",
+          "kind": "compute_pool",
+          "parent": null,
+          "properties": {
+            "provider": "aws",
+            "instance_type": "m7i.large",
+            "instances": 8
+          },
+          "requirements": [],
+          "fields": {}
+        }
+      }
+    ],
+    "removed_edges": [],
+    "added_edges": []
+  },
+  "impact": [
+    {
+      "component": "Api",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "Api"
+        }
+      ]
+    },
+    {
+      "component": "Api.buy",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "Api"
+        },
+        {
+          "source": "Api",
+          "relation": "contains",
+          "target": "Api.buy"
+        }
+      ]
+    },
+    {
+      "component": "Apps",
+      "changed": true,
+      "path": []
+    },
+    {
+      "component": "Orders",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "Api"
+        },
+        {
+          "source": "Api",
+          "relation": "contains",
+          "target": "Api.buy"
+        },
+        {
+          "source": "Api.buy",
+          "relation": "writes",
+          "target": "Orders.Items"
+        },
+        {
+          "source": "Orders.Items",
+          "relation": "reverse:contains",
+          "target": "Orders"
+        }
+      ]
+    },
+    {
+      "component": "Orders.Items",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "Api"
+        },
+        {
+          "source": "Api",
+          "relation": "contains",
+          "target": "Api.buy"
+        },
+        {
+          "source": "Api.buy",
+          "relation": "writes",
+          "target": "Orders.Items"
+        }
+      ]
+    },
+    {
+      "component": "Storage",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "Api"
+        },
+        {
+          "source": "Api",
+          "relation": "contains",
+          "target": "Api.buy"
+        },
+        {
+          "source": "Api.buy",
+          "relation": "writes",
+          "target": "Orders.Items"
+        },
+        {
+          "source": "Orders.Items",
+          "relation": "reverse:contains",
+          "target": "Orders"
+        },
+        {
+          "source": "Orders",
+          "relation": "hosted_on",
+          "target": "Storage"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "scenario": "Checkout remains within capacity",
+      "origin": "before",
+      "request": {
+        "entry": "Api",
+        "protocol": "http",
+        "method": "POST",
+        "path": "/buy",
+        "rate_rps": 10
+      },
+      "status": "introduced",
+      "before": {
+        "scenario": "Checkout remains within capacity",
+        "passed": true,
+        "outcome": "success",
+        "error": null,
+        "trace": [
+          "HTTP accepted by Api",
+          "Api runs on Apps",
+          "Api.buy executes on Apps",
+          "Connect Api.buy \u2192 Storage using TCP",
+          "TCP accepted by Storage",
+          "TCP accepted by Orders",
+          "Write Orders.Items: durability=memory, acknowledgements=1/1",
+          "Api.buy writes Orders.Items; partitions=unspecified",
+          "CPU Apps: demand=10 CPU-ms/s; capacity=2800; instances=2; required=1",
+          "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+          "Connection budget Orders:primary: potential=100/instance; available=300/instance",
+          "Response returned to caller"
+        ],
+        "reached": [
+          "Api",
+          "Apps",
+          "Api.buy",
+          "Storage",
+          "Orders",
+          "Orders.Items"
+        ],
+        "accessed": [
+          "Orders",
+          "Orders.Items"
+        ],
+        "failures": [],
+        "capacity": [
+          {
+            "resource": "Apps",
+            "instance_type": "m7i.large",
+            "instances": 2,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 10,
+            "capacity_cpu_ms_per_second": 2800.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": true,
+            "required_instances": 1,
+            "overloaded": false
+          },
+          {
+            "resource": "Storage:primary",
+            "instance_type": "m7i.large",
+            "instances": 1,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 10,
+            "capacity_cpu_ms_per_second": 1400.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": false,
+            "required_instances": 1,
+            "overloaded": false
+          }
+        ],
+        "budgets": [
+          {
+            "resource": "Orders:primary",
+            "kind": "connections",
+            "configured_pool_connections": 100,
+            "database_instances": 1,
+            "available_per_instance": 300,
+            "potential_per_instance": 100,
+            "overloaded": false
+          }
+        ],
+        "diagnostics": []
+      },
+      "after": {
+        "scenario": "Checkout remains within capacity",
+        "passed": false,
+        "outcome": "error",
+        "error": "CONNECTION_BUDGET_EXCEEDED",
+        "trace": [
+          "HTTP accepted by Api",
+          "Api runs on Apps",
+          "Api.buy executes on Apps",
+          "Connect Api.buy \u2192 Storage using TCP",
+          "TCP accepted by Storage",
+          "TCP accepted by Orders",
+          "Write Orders.Items: durability=memory, acknowledgements=1/1",
+          "Api.buy writes Orders.Items; partitions=unspecified",
+          "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+          "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+          "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+          "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+        ],
+        "reached": [
+          "Api",
+          "Apps",
+          "Api.buy",
+          "Storage",
+          "Orders",
+          "Orders.Items"
+        ],
+        "accessed": [
+          "Orders",
+          "Orders.Items"
+        ],
+        "failures": [
+          "Expected success, received error."
+        ],
+        "capacity": [
+          {
+            "resource": "Apps",
+            "instance_type": "m7i.large",
+            "instances": 8,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 10,
+            "capacity_cpu_ms_per_second": 11200.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": true,
+            "required_instances": 1,
+            "overloaded": false
+          },
+          {
+            "resource": "Storage:primary",
+            "instance_type": "m7i.large",
+            "instances": 1,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 10,
+            "capacity_cpu_ms_per_second": 1400.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": false,
+            "required_instances": 1,
+            "overloaded": false
+          }
+        ],
+        "budgets": [
+          {
+            "resource": "Orders:primary",
+            "kind": "connections",
+            "configured_pool_connections": 400,
+            "database_instances": 1,
+            "available_per_instance": 300,
+            "potential_per_instance": 400,
+            "overloaded": true
+          }
+        ],
+        "diagnostics": [
+          {
+            "rule": "CONNECTION_BUDGET_EXCEEDED",
+            "code": "CONNECTION_BUDGET_EXCEEDED",
+            "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+            "context": {
+              "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+              "object": "Orders",
+              "component": "database",
+              "provider": "aws",
+              "product": "unspecified",
+              "definition_owner": "Storage",
+              "template_origin": "generic",
+              "parameters": {
+                "resource": "Orders:primary",
+                "demand": 400,
+                "capacity": 300
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "category": "required",
+      "scenario": "Checkout remains within capacity",
+      "status": "introduced",
+      "code": "CONNECTION_BUDGET_EXCEEDED",
+      "evidence": [
+        "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+        "Expected success, received error.",
+        "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+      ],
+      "budgets": [
+        {
+          "resource": "Orders:primary",
+          "kind": "connections",
+          "configured_pool_connections": 400,
+          "database_instances": 1,
+          "available_per_instance": 300,
+          "potential_per_instance": 400,
+          "overloaded": true
+        }
+      ],
+      "capacity": [
+        {
+          "resource": "Apps",
+          "instance_type": "m7i.large",
+          "instances": 8,
+          "vcpus_per_instance": 2,
+          "cpu_utilization": 0.7,
+          "demand_cpu_ms_per_second": 10,
+          "capacity_cpu_ms_per_second": 11200.0,
+          "per_instance_cpu_ms_per_second": 1400.0,
+          "horizontal_scaling": true,
+          "required_instances": 1,
+          "overloaded": false
+        },
+        {
+          "resource": "Storage:primary",
+          "instance_type": "m7i.large",
+          "instances": 1,
+          "vcpus_per_instance": 2,
+          "cpu_utilization": 0.7,
+          "demand_cpu_ms_per_second": 10,
+          "capacity_cpu_ms_per_second": 1400.0,
+          "per_instance_cpu_ms_per_second": 1400.0,
+          "horizontal_scaling": false,
+          "required_instances": 1,
+          "overloaded": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "rule": "CONNECTION_BUDGET_EXCEEDED",
+          "code": "CONNECTION_BUDGET_EXCEEDED",
+          "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+          "context": {
+            "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+            "object": "Orders",
+            "component": "database",
+            "provider": "aws",
+            "product": "unspecified",
+            "definition_owner": "Storage",
+            "template_origin": "generic",
+            "parameters": {
+              "resource": "Orders:primary",
+              "demand": 400,
+              "capacity": 300
+            }
+          }
+        }
+      ],
+      "suggestions": [
+        "Compare smaller per-instance connection pools with connection pooling. Recheck demand after changing service instance counts; raising the database limit alone is not evidence of capacity."
+      ]
+    }
+  ],
+  "limitations": [
+    "Impact paths indicate possible effects, not proven failures.",
+    "Suggestions are alternatives for review; text suggestions are unvalidated; supplied candidate specifications are checked below, but no edits are applied.",
+    "Simulations stop at the first runtime failure; further bottlenecks may remain.",
+    "Recommendation eligibility covers declared scenarios only; no edits are applied. The objective and candidate trade-offs may require additional measurement."
+  ],
+  "recommendations": {
+    "status": "selected",
+    "objective": "Preserve eight application instances and the existing database connection limit.",
+    "candidates": [
+      {
+        "id": "smaller-pools",
+        "description": "Keep eight application instances and reduce each pool from 50 to 30 connections; reduces pool headroom.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Api",
+                  "before": {
+                    "name": "Api",
+                    "kind": "service",
+                    "parent": null,
+                    "properties": {
+                      "connection_pool_size": 50
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Api",
+                    "kind": "service",
+                    "parent": null,
+                    "properties": {
+                      "connection_pool_size": 30
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                },
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 2
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 8
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "Api",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Api.buy",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Orders",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  }
+                ]
+              },
+              {
+                "component": "Orders.Items",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  }
+                ]
+              },
+              {
+                "component": "Storage",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  },
+                  {
+                    "source": "Orders",
+                    "relation": "hosted_on",
+                    "target": "Storage"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=2800; instances=2; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=100/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 100,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 100,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=240/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 240,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 240,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Api",
+                  "before": {
+                    "name": "Api",
+                    "kind": "service",
+                    "parent": null,
+                    "properties": {
+                      "connection_pool_size": 50
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Api",
+                    "kind": "service",
+                    "parent": null,
+                    "properties": {
+                      "connection_pool_size": 30
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "Api",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Api.buy",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "hosted_on",
+                    "target": "Apps"
+                  }
+                ]
+              },
+              {
+                "component": "Orders",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  }
+                ]
+              },
+              {
+                "component": "Orders.Items",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  }
+                ]
+              },
+              {
+                "component": "Storage",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  },
+                  {
+                    "source": "Orders",
+                    "relation": "hosted_on",
+                    "target": "Storage"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CONNECTION_BUDGET_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+                    "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 400,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 400,
+                      "overloaded": true
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "code": "CONNECTION_BUDGET_EXCEEDED",
+                      "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                      "context": {
+                        "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                        "object": "Orders",
+                        "component": "database",
+                        "provider": "aws",
+                        "product": "unspecified",
+                        "definition_owner": "Storage",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Orders:primary",
+                          "demand": 400,
+                          "capacity": 300
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=240/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 240,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 240,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "fewer-instances",
+        "description": "Reduce application instances from eight to four, retaining pools of 50; reduces modeled compute headroom.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 2
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 4
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "Api",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  }
+                ]
+              },
+              {
+                "component": "Api.buy",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Orders",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  }
+                ]
+              },
+              {
+                "component": "Orders.Items",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  }
+                ]
+              },
+              {
+                "component": "Storage",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  },
+                  {
+                    "source": "Orders",
+                    "relation": "hosted_on",
+                    "target": "Storage"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=2800; instances=2; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=100/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 100,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 100,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=5600; instances=4; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=200/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 4,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 5600.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 200,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 200,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 8
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 4
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "Api",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  }
+                ]
+              },
+              {
+                "component": "Api.buy",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Orders",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  }
+                ]
+              },
+              {
+                "component": "Orders.Items",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  }
+                ]
+              },
+              {
+                "component": "Storage",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  },
+                  {
+                    "source": "Orders",
+                    "relation": "hosted_on",
+                    "target": "Storage"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CONNECTION_BUDGET_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+                    "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 400,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 400,
+                      "overloaded": true
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "code": "CONNECTION_BUDGET_EXCEEDED",
+                      "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                      "context": {
+                        "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                        "object": "Orders",
+                        "component": "database",
+                        "provider": "aws",
+                        "product": "unspecified",
+                        "definition_owner": "Storage",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Orders:primary",
+                          "demand": 400,
+                          "capacity": 300
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=5600; instances=4; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=200/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 4,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 5600.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 200,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 200,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "unchanged",
+        "description": "Keep the failing eight instances with pools of 50.",
+        "eligible": false,
+        "validation": {
+          "baseline": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 2
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "aws",
+                      "instance_type": "m7i.large",
+                      "instances": 8
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "Api",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  }
+                ]
+              },
+              {
+                "component": "Api.buy",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "Orders",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  }
+                ]
+              },
+              {
+                "component": "Orders.Items",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  }
+                ]
+              },
+              {
+                "component": "Storage",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "Api"
+                  },
+                  {
+                    "source": "Api",
+                    "relation": "contains",
+                    "target": "Api.buy"
+                  },
+                  {
+                    "source": "Api.buy",
+                    "relation": "writes",
+                    "target": "Orders.Items"
+                  },
+                  {
+                    "source": "Orders.Items",
+                    "relation": "reverse:contains",
+                    "target": "Orders"
+                  },
+                  {
+                    "source": "Orders",
+                    "relation": "hosted_on",
+                    "target": "Storage"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "introduced",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=2800; instances=2; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=100/instance; available=300/instance",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 100,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 100,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CONNECTION_BUDGET_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+                    "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 400,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 400,
+                      "overloaded": true
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "code": "CONNECTION_BUDGET_EXCEEDED",
+                      "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                      "context": {
+                        "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                        "object": "Orders",
+                        "component": "database",
+                        "provider": "aws",
+                        "product": "unspecified",
+                        "definition_owner": "Storage",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Orders:primary",
+                          "demand": 400,
+                          "capacity": 300
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Checkout remains within capacity",
+                "status": "introduced",
+                "code": "CONNECTION_BUDGET_EXCEEDED",
+                "evidence": [
+                  "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                  "Expected success, received error.",
+                  "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                ],
+                "budgets": [
+                  {
+                    "resource": "Orders:primary",
+                    "kind": "connections",
+                    "configured_pool_connections": 400,
+                    "database_instances": 1,
+                    "available_per_instance": 300,
+                    "potential_per_instance": 400,
+                    "overloaded": true
+                  }
+                ],
+                "capacity": [
+                  {
+                    "resource": "Apps",
+                    "instance_type": "m7i.large",
+                    "instances": 8,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 10,
+                    "capacity_cpu_ms_per_second": 11200.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": true,
+                    "required_instances": 1,
+                    "overloaded": false
+                  },
+                  {
+                    "resource": "Storage:primary",
+                    "instance_type": "m7i.large",
+                    "instances": 1,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 10,
+                    "capacity_cpu_ms_per_second": 1400.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": false,
+                    "required_instances": 1,
+                    "overloaded": false
+                  }
+                ],
+                "diagnostics": [
+                  {
+                    "rule": "CONNECTION_BUDGET_EXCEEDED",
+                    "code": "CONNECTION_BUDGET_EXCEEDED",
+                    "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                    "context": {
+                      "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "object": "Orders",
+                      "component": "database",
+                      "provider": "aws",
+                      "product": "unspecified",
+                      "definition_owner": "Storage",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "resource": "Orders:primary",
+                        "demand": 400,
+                        "capacity": 300
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Compare smaller per-instance connection pools with connection pooling. Recheck demand after changing service instance counts; raising the database limit alone is not evidence of capacity."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [],
+            "comparisons": [
+              {
+                "scenario": "Checkout remains within capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "Api",
+                  "protocol": "http",
+                  "method": "POST",
+                  "path": "/buy",
+                  "rate_rps": 10
+                },
+                "status": "persists",
+                "before": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CONNECTION_BUDGET_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+                    "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 400,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 400,
+                      "overloaded": true
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "code": "CONNECTION_BUDGET_EXCEEDED",
+                      "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                      "context": {
+                        "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                        "object": "Orders",
+                        "component": "database",
+                        "provider": "aws",
+                        "product": "unspecified",
+                        "definition_owner": "Storage",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Orders:primary",
+                          "demand": 400,
+                          "capacity": 300
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Checkout remains within capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CONNECTION_BUDGET_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by Api",
+                    "Api runs on Apps",
+                    "Api.buy executes on Apps",
+                    "Connect Api.buy \u2192 Storage using TCP",
+                    "TCP accepted by Storage",
+                    "TCP accepted by Orders",
+                    "Write Orders.Items: durability=memory, acknowledgements=1/1",
+                    "Api.buy writes Orders.Items; partitions=unspecified",
+                    "CPU Apps: demand=10 CPU-ms/s; capacity=11200; instances=8; required=1",
+                    "CPU Storage:primary: demand=10 CPU-ms/s; capacity=1400; instances=1; required=1",
+                    "Connection budget Orders:primary: potential=400/instance; available=300/instance",
+                    "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                  ],
+                  "reached": [
+                    "Api",
+                    "Apps",
+                    "Api.buy",
+                    "Storage",
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "accessed": [
+                    "Orders",
+                    "Orders.Items"
+                  ],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "m7i.large",
+                      "instances": 8,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 11200.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Storage:primary",
+                      "instance_type": "m7i.large",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 10,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": false,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [
+                    {
+                      "resource": "Orders:primary",
+                      "kind": "connections",
+                      "configured_pool_connections": 400,
+                      "database_instances": 1,
+                      "available_per_instance": 300,
+                      "potential_per_instance": 400,
+                      "overloaded": true
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "code": "CONNECTION_BUDGET_EXCEEDED",
+                      "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                      "context": {
+                        "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                        "object": "Orders",
+                        "component": "database",
+                        "provider": "aws",
+                        "product": "unspecified",
+                        "definition_owner": "Storage",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Orders:primary",
+                          "demand": 400,
+                          "capacity": 300
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Checkout remains within capacity",
+                "status": "persists",
+                "code": "CONNECTION_BUDGET_EXCEEDED",
+                "evidence": [
+                  "CONNECTION_BUDGET_EXCEEDED: Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                  "Expected success, received error.",
+                  "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available."
+                ],
+                "budgets": [
+                  {
+                    "resource": "Orders:primary",
+                    "kind": "connections",
+                    "configured_pool_connections": 400,
+                    "database_instances": 1,
+                    "available_per_instance": 300,
+                    "potential_per_instance": 400,
+                    "overloaded": true
+                  }
+                ],
+                "capacity": [
+                  {
+                    "resource": "Apps",
+                    "instance_type": "m7i.large",
+                    "instances": 8,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 10,
+                    "capacity_cpu_ms_per_second": 11200.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": true,
+                    "required_instances": 1,
+                    "overloaded": false
+                  },
+                  {
+                    "resource": "Storage:primary",
+                    "instance_type": "m7i.large",
+                    "instances": 1,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 10,
+                    "capacity_cpu_ms_per_second": 1400.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": false,
+                    "required_instances": 1,
+                    "overloaded": false
+                  }
+                ],
+                "diagnostics": [
+                  {
+                    "rule": "CONNECTION_BUDGET_EXCEEDED",
+                    "code": "CONNECTION_BUDGET_EXCEEDED",
+                    "message": "Orders:primary: configured pools could open 400 connections per database instance; only 300 are available.",
+                    "context": {
+                      "error_rule": "CONNECTION_BUDGET_EXCEEDED",
+                      "object": "Orders",
+                      "component": "database",
+                      "provider": "aws",
+                      "product": "unspecified",
+                      "definition_owner": "Storage",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "resource": "Orders:primary",
+                        "demand": 400,
+                        "capacity": 300
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Compare smaller per-instance connection pools with connection pooling. Recheck demand after changing service instance counts; raising the database limit alone is not evidence of capacity."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      }
+    ],
+    "selected": "fewer-instances",
+    "selection": "model",
+    "model_calls": 1,
+    "probabilities": {
+      "smaller-pools": 0.3941,
+      "fewer-instances": 0.6059
+    },
+    "confidence_interval": null,
+    "confidence_interval_reason": "No independent labeled evaluation data; choice probabilities are not confidence intervals.",
+    "probability_interpretation": "Uncalibrated model preference among eligible alternatives, not probability of production success.",
+    "model": "laya@0.3.21:sha256:4f641913611f8d0bff2331d773990f64ff22c072a8d736c62e7cc29fbf05912c",
+    "provider_details": {
+      "input_state": {
+        "objective": "Preserve eight application instances and the existing database connection limit.",
+        "failure_codes": [
+          "CONNECTION_BUDGET_EXCEEDED"
+        ],
+        "candidate_validation": "All offered choices pass all declared baseline and proposal scenarios. Unmodeled trade-offs in descriptions remain unverified."
+      },
+      "device": "cpu",
+      "checkpoint_sha256": "4f641913611f8d0bff2331d773990f64ff22c072a8d736c62e7cc29fbf05912c",
+      "runtime_version": "0.3.21"
+    }
+  }
+}

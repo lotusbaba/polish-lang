@@ -11,3 +11,6 @@ dist/
 .env.*
 !.env.example
 .pypirc
+
+.models/
+.venv-laya/

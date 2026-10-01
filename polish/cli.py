@@ -18,10 +18,18 @@ def main(argv=None) -> int:
     parser.add_argument("--config-dir", type=Path, help="Directory containing language definition JSON files")
     parser.add_argument("--candidates", type=Path, help="JSON manifest of candidate changes for plan")
     parser.add_argument("--objective", help="Objective for choosing among validated candidate changes")
-    parser.add_argument("--decision-provider", choices=["none", "jev"], default="none",
+    parser.add_argument("--decision-provider", choices=["none", "jev", "laya"], default="none",
                         help="Optional recommendation model; none performs offline candidate checks")
     parser.add_argument("--choice-evaluation", type=Path, help="Independent labeled evaluation JSON for historical choice accuracy intervals")
+    parser.add_argument("--laya-checkpoint", type=Path, help="Existing local Laya checkpoint directory (no downloads)")
+    parser.add_argument("--laya-device", choices=["cpu", "mps", "cuda"], default=None)
+    parser.add_argument("--laya-timeout", type=float, default=None, help="Local worker time limit, default 180 seconds")
+    parser.add_argument("--laya-python", type=Path, help="Optional separate Python runtime with Laya installed")
     args = parser.parse_args(argv)
+    if args.decision_provider == "laya" and not args.laya_checkpoint:
+        parser.error("--decision-provider laya requires --laya-checkpoint")
+    if args.decision_provider != "laya" and any(v is not None for v in (args.laya_checkpoint,args.laya_device,args.laya_timeout,args.laya_python)):
+        parser.error("--laya-* options require --decision-provider laya")
     if (args.candidates or args.objective or args.decision_provider != "none") and args.command != "plan":
         parser.error("recommendation options are only supported with plan")
     if bool(args.candidates) != bool(args.objective):
@@ -37,10 +45,16 @@ def main(argv=None) -> int:
         from .recommendations import recommend, load_candidates, JevDecisionModel
         from .choice_evaluation import load_evaluation
         try:
+            model = JevDecisionModel() if args.decision_provider == "jev" else None
+            if args.decision_provider == "laya":
+                from .laya_provider import LayaDecisionModel
+                model = LayaDecisionModel(args.laya_checkpoint, device=args.laya_device or "cpu",
+                                          timeout=args.laya_timeout if args.laya_timeout is not None else 180,
+                                          python=args.laya_python.absolute() if args.laya_python else None)
             if args.candidates:
                 payload = recommend(args.file.read_text(), args.proposed.read_text(),
                                     load_candidates(args.candidates), objective=args.objective,
-                                    model=JevDecisionModel() if args.decision_provider == "jev" else None,
+                                    model=model,
                                     config_dir=args.config_dir, scenario_name=args.scenario,
                                     evaluation=load_evaluation(args.choice_evaluation) if args.choice_evaluation else None)
             else:

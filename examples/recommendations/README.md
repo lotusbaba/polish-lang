@@ -156,3 +156,129 @@ existing regression. Add scenarios for important properties currently unmodeled.
 After reviewing a selected candidate, run `plan` again with that file as `--proposed`.
 This is a separate verification step; choosing a candidate never edits the proposal
 or deploys anything.
+
+## Local Laya provider
+
+Laya uses the same candidate validation and output checks as Jev. Enable it with
+`--decision-provider laya --laya-checkpoint /path/to/checkpoint`. No API key is needed,
+and inference never downloads a checkpoint. The child process uses Hugging Face
+offline settings and blocks outbound socket connections. A separate process also
+keeps model logs out of JSON output and allows a stalled load/inference to be killed.
+
+Install the optional runtime in the main virtual environment:
+
+```sh
+.venv/bin/python -m pip install '.[laya]'
+```
+
+Alternatively, keep the larger ML dependencies separate:
+
+```sh
+python3 -m venv .venv-laya
+.venv-laya/bin/python -m pip install 'laya==0.3.21'
+```
+
+Pass `--laya-python .venv-laya/bin/python` when using that separate environment.
+An existing compatible runtime can also be reused; no RadioWorkx import is required.
+The integration is tested against the Laya 0.3.21 API. See the
+[upstream project](https://github.com/NandhaKishorM/laya) for runtime installation.
+
+Supply a trusted local checkpoint containing `rl_agent_config.json`,
+`model.safetensors`, `encoder/config.json`, `tokenizer/tokenizer.json`, and
+`tokenizer/tokenizer_config.json`. For a reproducible initial example, download the
+same pinned browser checkpoint used in the local RadioWorkx experiments. This is
+an explicit network step, separate from inference; a browser checkpoint is not an
+architecture-recommendation quality benchmark:
+
+```sh
+.venv-laya/bin/python - <<'PY'
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id="cklxx/laya-browser",
+    revision="645cf366a2ae35f1086e8c20eff48f909bb49206",
+    local_dir=".models/laya-browser",
+    allow_patterns=["rl_agent_config.json", "model.safetensors", "encoder/config.json",
+                    "tokenizer/tokenizer.json", "tokenizer/tokenizer_config.json"],
+)
+PY
+```
+
+Run the same candidate comparison locally:
+
+```sh
+.venv/bin/python -m polish plan \
+  examples/recommendations/connection-pools/before.polishd \
+  --proposed examples/recommendations/connection-pools/proposed.polishd \
+  --candidates examples/recommendations/connection-pools/candidates.json \
+  --objective "Preserve eight application instances and the existing database connection limit." \
+  --decision-provider laya \
+  --laya-checkpoint .models/laya-browser \
+  --laya-python .venv-laya/bin/python \
+  --laya-device cpu --laya-timeout 180 \
+  --json > /tmp/polish-laya-report.json
+```
+
+Omit `--laya-python` if Laya is installed in the same environment as Polish.
+`--laya-device` defaults to `cpu`; `mps` and `cuda` must be available in the runtime.
+`--laya-timeout` defaults to 180 seconds and includes hashing, imports, loading, and
+inference. A timeout produces `status: model_error` and terminates the worker. There
+are no retries or implicit hosted fallbacks. One eligible candidate still bypasses
+inference entirely. The original plan exit code remains independent of model status.
+
+Laya receives a compact state containing the complete objective, failure codes, and
+a statement of candidate validation, plus every eligible ID and description. Full
+graph evidence remains in the report. `provider_details.input_state` shows this exact
+state. Oversized inputs are rejected rather than knowingly truncating the objective
+or dropping candidates. Shorten descriptions if a context-budget error is reported.
+
+Successful reports include the runtime version, device, and a SHA-256 fingerprint
+of the five checkpoint files. `model` incorporates the fingerprint and Laya version,
+so historical choice evaluations cannot silently match a different checkpoint.
+Probabilities remain uncalibrated preferences; the confidence-interval rules above
+apply equally to Laya. Different provider inputs mean this is an integration comparison,
+not a controlled model-quality benchmark. A fresh worker loads once per recommendation;
+there is no persistent model server or shared queue in this CLI.
+
+### Local smoke result
+
+The [local CPU run](results/laya-connection-pools.json) completed using Laya 0.3.21
+and the pinned browser checkpoint above, with socket connections blocked. The first
+90-second attempt timed out during startup; the 180-second attempt completed.
+It selected `fewer-instances` (0.8544) over `smaller-pools` (0.1456), despite the
+objective to preserve eight instances. Both candidates satisfy the declared
+simulation requirements, but this selection does **not** satisfy that preference.
+This verifies integration, not recommendation quality. No provider fallback or
+changes to expectations were used to obtain the result.
+
+### Browser versus general English checkpoint
+
+We also tested the cached general English checkpoint
+`convaiinnovations/laya@55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851` on CPU with
+Laya 0.3.21. Its local files were verified against their recorded SHA-256 manifest.
+The objective, candidate descriptions, compact input state, and deterministic
+validation results were identical to the browser-checkpoint run. Each checkpoint
+used its own configured context limits; both accepted the complete test input.
+
+| Checkpoint | Smaller pools | Fewer instances | Selected |
+| --- | ---: | ---: | --- |
+| Browser | 0.1456 | 0.8544 | Fewer instances |
+| General English | 0.3941 | 0.6059 | Fewer instances |
+
+Both selected an alternative inconsistent with the objective to preserve eight
+instances. The general checkpoint assigned more probability to the preferred choice,
+but did not improve the selected answer on this case. These are uncalibrated choice
+probabilities, not confidence intervals. One synthetic case does not establish
+relative accuracy across architecture tasks. This run does not change the checkpoint
+you pass explicitly to the CLI.
+
+Evidence: [general English report](results/laya-general-connection-pools.json),
+[comparison and model fingerprints](results/laya-checkpoint-comparison.json), and
+[HTML overview](results/report.html). The general checkpoint is an existing pinned
+snapshot, not a claim about the latest upstream revision.
+
+To reproduce, download that explicit revision into a separate directory using the
+`snapshot_download` example above, changing `repo_id` to `convaiinnovations/laya`,
+`revision` to `55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851`, and `local_dir` to
+`.models/laya-general`. Keep the same five allowed files. Then repeat the identical
+plan command, changing only `--laya-checkpoint .models/laya-general` and the output
+file to `/tmp/polish-laya-general-report.json`.

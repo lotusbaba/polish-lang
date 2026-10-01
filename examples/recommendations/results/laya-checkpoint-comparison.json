@@ -1,0 +1,24 @@
+{
+  "same_input_state": true,
+  "same_candidates_and_validation": true,
+  "expected_choice_for_objective": "smaller-pools",
+  "checkpoints": {
+    "browser": {
+      "model": "laya@0.3.21:sha256:6b5403d8adf8e23792f04c53bca01f598b440db0ded2df924ed42670e653bdf3",
+      "selected": "fewer-instances",
+      "probabilities": {
+        "smaller-pools": 0.1456,
+        "fewer-instances": 0.8544
+      }
+    },
+    "general_english": {
+      "model": "laya@0.3.21:sha256:4f641913611f8d0bff2331d773990f64ff22c072a8d736c62e7cc29fbf05912c",
+      "selected": "fewer-instances",
+      "probabilities": {
+        "smaller-pools": 0.3941,
+        "fewer-instances": 0.6059
+      }
+    }
+  },
+  "limitation": "One synthetic example, not a general accuracy benchmark. Model probabilities are uncalibrated."
+}

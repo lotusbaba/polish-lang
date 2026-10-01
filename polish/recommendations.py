@@ -135,6 +135,8 @@ def recommend(before_source, proposed_source, candidates, *, objective, model=No
             advice.update(status='model_error', error=str(exc))
         else:
             advice.update(status='selected', selection='model', **answer)
+            if getattr(model, 'details', None) is not None:
+                advice['provider_details'] = model.details
             if evaluation is not None:
                 from .choice_evaluation import evaluate_choices
                 try:

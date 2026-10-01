@@ -135,3 +135,16 @@ It does not establish production capacity or apply the fix anywhere.
 Install the `dev` and `jev` extras to include mocked HTTP adapter checks. Unit tests
 make no hosted model requests and need no API keys. Live example reports are historical
 integration evidence, not tests of a deployed application or a calibration benchmark.
+
+## Use a local model instead of Jev
+
+Use `--decision-provider laya` with an explicit local checkpoint and optional separate
+Python runtime. Follow [the Laya walkthrough](../examples/recommendations/README.md#local-laya-provider).
+Laya needs no key, blocks network access during inference, and reports a model error
+if loading or inference exceeds the configured timeout. A valid local path and the
+optional ML dependencies are required; selecting Laya does not download them.
+
+The [browser/general checkpoint comparison](../examples/recommendations/README.md#browser-versus-general-english-checkpoint)
+shows why reviewing the selected candidate matters: both local checkpoints selected
+fewer instances even when asked to preserve eight. Simulator eligibility and objective
+alignment are distinct; a high model probability does not replace that review.
