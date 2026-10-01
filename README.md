@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.12: a Python compiler and
+This repository contains version 0.13: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
