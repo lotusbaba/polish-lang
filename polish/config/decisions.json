@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "E_VENDOR": {
+      "suggestions": [
+        "Review the product contract in the diagnostic. For NLB path rules, use an ALB or move HTTP routing behind the NLB; recheck TLS requirements."
+      ]
+    },
+    "CAPACITY_EXCEEDED": {
+      "suggestions": [
+        "Use the reported required_instances as a CPU-only lower bound. Compare more instances with larger hosts, then rerun memory and database connection checks."
+      ]
+    },
+    "PRIMARY_CAPACITY_EXCEEDED": {
+      "suggestions": [
+        "Compare a larger primary with reducing write CPU cost. Read replicas do not increase primary write capacity."
+      ]
+    },
+    "CONNECTION_BUDGET_EXCEEDED": {
+      "suggestions": [
+        "Compare smaller per-instance connection pools with connection pooling. Recheck demand after changing service instance counts; raising the database limit alone is not evidence of capacity."
+      ]
+    },
+    "MEMORY_CAPACITY_EXCEEDED": {
+      "suggestions": [
+        "Compare larger-memory hosts with reducing per-request memory; additional instances cannot fix a request that exceeds one instance."
+      ]
+    },
+    "SCALING_MODEL_INCOMPLETE": {
+      "suggestions": [
+        "Supply the missing capacity or workload inputs identified by the trace before drawing conclusions."
+      ]
+    },
+    "TLS_UNSUPPORTED": {
+      "suggestions": [
+        "Check both sides of the affected connection and the TLS termination and upstream protocol settings."
+      ]
+    },
+    "PLATFORM_CAPACITY_EXCEEDED": {
+      "suggestions": [
+        "Review the overloaded resource budget and downstream dependencies. Increase declared capacity only when supported by measurements or provisioning changes."
+      ]
+    },
+    "RATE_LIMITED": {
+      "suggestions": [
+        "Compare traffic shaping with a revised rate policy, and verify downstream capacity before increasing the limit."
+      ]
+    }
+  }
+}

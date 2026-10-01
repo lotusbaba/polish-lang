@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.7: a Python compiler and
+This repository contains version 0.8: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -1057,3 +1057,52 @@ layers/tags, network transfer time, and registry storage capacity are not modele
 ## License
 
 Polish is licensed under the [MIT License](LICENSE).
+
+## Change-impact analysis and suggestions
+
+Compare an existing architecture with a proposed design:
+
+```sh
+polish plan examples/plan-before.polishd --proposed examples/plan-after.polishd
+polish plan examples/plan-before.polishd --proposed examples/plan-after.polishd --json
+```
+
+The example raises service instances from 2 to 8 without changing the connection
+pool. Polish identifies an introduced failure: `8 × 50 = 400` potential database
+connections against a budget of 300. It suggests comparing smaller per-instance
+pools with connection pooling. Changing the pool size to 30 gives 240 potential
+connections; rerun the plan to verify that proposal against the scenarios.
+The proposed example intentionally fails its success requirement, so this command
+returns exit code 1.
+
+The planner compares component properties, requirements, fields, and relationships
+(including edge options). It follows relationships in both directions, containment,
+and explicit `via` references across both versions. Impact paths are conservative:
+sharing a connected graph means a component may be affected, not that it must change.
+Line-number changes do not count as architecture changes; renames appear as removal
+and addition. JSON output includes the diff and a path to each potentially affected
+component.
+
+Both the baseline and proposed scenarios are evaluated against both designs.
+Identical scenarios are deduplicated; altered workloads or expectations are retained
+as separate requirements. Deleting or weakening a baseline scenario therefore does
+not erase the original requirement. `--scenario NAME` explicitly narrows evaluation.
+Results are classified as `introduced`, `persists`, `resolved`, or `unchanged_pass`
+according to whether the scenario's expectations pass. An expected denial or error
+can be a passing requirement. `persists` means the requirement fails in both designs;
+the underlying error may have changed, so inspect the before/after evidence.
+
+Findings distinguish required fixes from missing information and include suggestions
+from `polish/config/decisions.json`. Custom config directories must include this file
+when running `plan`. Ordinary `check` and `simulate` do not require decision rules.
+Compiler-invalid designs receive diagnostics and advice without being simulated.
+Cross-design scenarios with incompatible references receive explicit diagnostics.
+
+This first planning iteration proposes advice, not edited candidate architectures.
+Suggestions are not automatically applied, ranked, or proven to resolve a failure;
+edit a proposal and rerun the plan to test it. There is no optimization objective,
+cost model, or migration execution engine yet. Simulations stop at the first runtime
+failure, and unobserved affected components are reported as needing information.
+Exit code 0 means all selected requirements pass on the proposed design, not that
+all possible impacts have been tested. Hard constraints currently come from the
+compiler rules and scenario expectations.

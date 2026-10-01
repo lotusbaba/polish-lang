@@ -64,6 +64,9 @@ class Architecture:
     def outgoing(self, source: str, kind: str | None = None) -> list[Edge]:
         return [e for e in self.edges if e.source == source and (kind is None or e.kind == kind)]
 
+    def incoming(self, target: str, kind: str | None = None) -> list[Edge]:
+        return [e for e in self.edges if e.target == target and (kind is None or e.kind == kind)]
+
     def resolve(self, reference: str, scope: str | None = None) -> str | None:
         while scope:
             candidate = f"{scope}.{reference}"

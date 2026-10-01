@@ -10,12 +10,39 @@ from .errors import render_error
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="polish", description="Check and simulate architecture specifications.")
-    parser.add_argument("command", choices=["check", "simulate"])
+    parser.add_argument("command", choices=["check", "simulate", "plan"])
     parser.add_argument("file", type=Path)
+    parser.add_argument("--proposed", type=Path, help="Proposed architecture for plan")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable diagnostics and traces")
     parser.add_argument("--scenario", help="Run one named scenario")
     parser.add_argument("--config-dir", type=Path, help="Directory containing language definition JSON files")
     args = parser.parse_args(argv)
+    if args.command == "plan":
+        if args.proposed is None:
+            parser.error("plan requires --proposed FILE")
+        from .planner import plan
+        try:
+            payload = plan(args.file.read_text(), args.proposed.read_text(), config_dir=args.config_dir, scenario_name=args.scenario)
+        except (OSError, UnicodeError, ConfigurationError) as exc:
+            payload = {"ok": False, "diagnostics": [{"message": str(exc)}]}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            for diagnostic in payload.get("diagnostics", []):
+                print(f"{diagnostic.get('side', '')}: {diagnostic['message']}")
+            print(f"Potentially affected components: {len(payload.get('impact', []))}")
+            for comparison in payload.get("comparisons", []):
+                print(f"{comparison['status']}: {comparison['scenario']} ({comparison['origin']} requirements)")
+            for finding in payload.get("findings", []):
+                print(f"{finding['category']}: {finding['code']}")
+                print(f"  Evidence: {finding.get('evidence', '')}")
+                for suggestion in finding.get("suggestions", []):
+                    print(f"  Suggestion: {suggestion}")
+            for limitation in payload.get("limitations", []):
+                print(f"Note: {limitation}")
+        return 0 if payload["ok"] else 1
+    if args.proposed is not None:
+        parser.error("--proposed is only supported with plan")
     try:
         config = load_config(args.config_dir)
         compilation = compile_source(args.file.read_text(encoding="utf-8"), config_dir=args.config_dir)
