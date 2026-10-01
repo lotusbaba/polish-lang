@@ -73,7 +73,13 @@ def main(argv=None) -> int:
             location = f"{args.file}:{diagnostic.get('line', 1)}:{diagnostic.get('column', 1)}"
             print(f"{location}: {diagnostic['code']}: {diagnostic['message']}")
         for result in payload["results"]:
-            print(f"{'PASS' if result['passed'] else 'FAIL'} {result['scenario']} ({result['outcome']})")
+            print(f"{'PASS' if result['passed'] else 'FAIL'} {result['scenario']}")
+            if result['passed']:
+                label = {"success": "Expected success observed", "error": "Expected failure observed", "denied": "Expected denial observed"}[result['outcome']]
+            else:
+                label = f"Observed request outcome: {result['outcome']}"
+            detail = f": {result['error']}" if result['error'] else ""
+            print(f"  {label}{detail}")
             for step in result["trace"]:
                 print(f"  {step}")
             for failure in result["failures"]:
