@@ -175,8 +175,8 @@ def prepare_products(arch, error, config):
             continue
         target = arch.nodes[edge.target]
         if target.kind == "cache":
-            if set(edge.properties) - {"via", "protocol", "path"}:
-                error("E_VENDOR", line=edge.line, detail="Cache edges support only via, protocol, and path; cache capacity is declared on the cache")
+            if set(edge.properties) - {"via", "protocol", "path", "pool_size", "pool_scope", "pool_distribution", "on_miss", "on_error"}:
+                error("E_VENDOR", line=edge.line, detail="Unsupported cache edge option; use transport, client pool, or miss/error policy settings")
             continue
         db = target if target.kind == "database" else arch.nodes.get(target.parent)
         hosts = arch.outgoing(db.name, "hosted_on") if db else []

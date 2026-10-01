@@ -925,6 +925,35 @@
         "node"
       ],
       "outcome": "error"
+    },
+    "CACHE_CONNECTION_BUDGET_EXCEEDED": {
+      "code": "CACHE_CONNECTION_BUDGET_EXCEEDED",
+      "phase": "simulation",
+      "message": "{node}: potential connections per node {demand} exceed available {capacity}.",
+      "parameters": [
+        "node",
+        "demand",
+        "capacity"
+      ],
+      "outcome": "error"
+    },
+    "CACHE_UNAVAILABLE": {
+      "code": "CACHE_UNAVAILABLE",
+      "phase": "simulation",
+      "message": "Cache {node} returned a simulated error; no error fallback is configured.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
+    },
+    "CACHE_MISS": {
+      "code": "CACHE_MISS",
+      "phase": "simulation",
+      "message": "Cache {node} missed and its client policy requires failure.",
+      "parameters": [
+        "node"
+      ],
+      "outcome": "error"
     }
   }
 }

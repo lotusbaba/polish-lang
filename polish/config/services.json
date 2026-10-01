@@ -7,7 +7,8 @@
         "base_memory_mib",
         "memory_per_request_mib",
         "duration_ms",
-        "connection_pool_size"
+        "connection_pool_size",
+        "workers_per_instance"
       ],
       "parents": []
     },

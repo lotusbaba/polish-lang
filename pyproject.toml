@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "polish-lang"
-version = "0.8.0"
+version = "0.9.0"
 description = "An executable architecture specification language"
 readme = "README.md"
 license = "MIT"

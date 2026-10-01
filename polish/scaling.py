@@ -54,8 +54,8 @@ def validate_scaling(arch, error):
             error("E_SCALING", line=edge.line, detail="Connection cpu_ms must be finite and nonnegative")
     for scenario in arch.scenarios:
         p = scenario.request
-        if p.get("cache_result", "miss") not in {"hit", "miss"}:
-            error("E_SCALING", line=scenario.line, detail="cache_result must be hit or miss")
+        if p.get("cache_result", "miss") not in {"hit", "miss", "error"}:
+            error("E_SCALING", line=scenario.line, detail="cache_result must be hit, miss, or error")
         for key in ("burst_requests", "query_depth", "query_cost", "window_seconds"):
             if key in p and not number(p[key], key == "window_seconds"):
                 error("E_SCALING", line=scenario.line, detail=f"Invalid {key}")

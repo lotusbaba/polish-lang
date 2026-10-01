@@ -287,4 +287,6 @@ def compile_source(source: str, *, config_dir=None) -> Compilation:
                 error('E_REFERENCE_2', line=scenario.line, target=target)
     from .scaling import validate_scaling
     validate_scaling(arch, error)
+    from .cache_connections import validate_cache_connections
+    validate_cache_connections(arch, error)
     return Compilation(arch, diagnostics)

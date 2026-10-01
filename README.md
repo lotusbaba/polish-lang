@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.8: a Python compiler and
+This repository contains version 0.9: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -1106,3 +1106,78 @@ failure, and unobserved affected components are reported as needing information.
 Exit code 0 means all selected requirements pass on the proposed design, not that
 all possible impacts have been tested. Hard constraints currently come from the
 compiler rules and scenario expectations.
+
+## Cache connections and failure behavior
+
+The radio catalog example models an API depending on Memcached and demonstrates
+connection overload, a cache miss fallback, and a cache error propagating to the API:
+
+```sh
+polish simulate examples/radio-catalog.polishd
+```
+
+Describe a reusable client pool on each cache `reads` or `writes` relationship:
+
+```polish
+reads StationCache {
+  pool_size = 50
+  pool_scope = worker
+  pool_distribution = per_node
+  on_miss = fallback
+  on_error = fail
+}
+```
+
+Worker-scoped pools require `workers_per_instance` on the source service.
+`pool_scope = instance` instead models one pool per service instance. All edges
+from a service to the same cache describe one shared pool and must agree on the
+three pool properties. Repeated reads/writes count that pool once; distinct services
+add to the same cache budget. These checks run even without `rate_rps` because pool
+limits do not depend on request throughput.
+
+The cache declares `max_connections_per_instance` and optional
+`reserved_connections_per_instance` (default 0). Self-hosted caches get node counts
+from their host's `instances`; managed ElastiCache products require `nodes` for this
+model. Scenario `scale` selects minimum/maximum host counts as for other budgets.
+A supplied client pool requires a server limit, and a server limit requires client
+pool settings; missing values produce an incomplete-model error.
+
+For 20 API instances and 8 workers per instance:
+
+| Distribution | Calculation | Potential connections per cache node |
+|---|---|---|
+| `per_node` | 20 × 8 × 50 | 8,000, regardless of cache node count |
+| `cluster_even`, 3 cache nodes | ceil(20 × 8 × 50 / 3) | 2,667 |
+
+`cluster_even` explicitly assumes an even distribution. It is not automatic
+sharding inference and does not model hotspots or skew. When multiple services
+share the cache, their rounded per-node budgets are added conservatively.
+
+These numbers describe worst-case configured pool capacity, not observed sockets.
+The budget reports `CACHE_CONNECTION_BUDGET_EXCEEDED` if demand exceeds the limit
+minus reserved connections. It does not infer a timeout or predict when pools fill.
+Client creation per request, socket lifetime, retries, and deadline propagation are
+not modeled in this iteration. Redis and Memcached use the same declared pool math;
+Redis-specific primary/replica connection distribution is not inferred.
+
+The scenario's `cache_result` is `hit`, `miss` (default), or `error` and applies to
+all cache accesses in that scenario. Reads honor hit/miss; writes ignore hit/miss.
+Both reads and writes honor error. Client policies are:
+
+- `on_miss = fallback` (default): execute the cache's existing `invokes` fallback.
+- `on_miss = fail`: report `CACHE_MISS`.
+- `on_error = fail` (default): report `CACHE_UNAVAILABLE`, propagating to the caller.
+- `on_error = fallback`: execute the cache's `invokes` fallback, including its
+  downstream workload checks. An explicit fallback policy requires that relationship.
+
+This error injection models a failed cache access; it does not bypass TLS or other
+architecture validation. Connection-budget overload remains a budget failure even
+if error fallback is configured. Multiple `invokes` fallbacks all execute, following
+the existing dependency semantics.
+
+For planning, keep a success expectation for the catalog request and compare API
+instance counts. `polish plan` will identify a new cache-budget violation and suggest
+reviewing pool size, workers, and connection distribution. The radio example instead
+expects the overloaded scenario to fail, so all four demonstration scenarios pass.
+Fastly edge-cache traffic reduction and an automatic before/after cache migration
+model are not included yet.

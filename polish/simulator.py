@@ -12,6 +12,7 @@ from .scaling import CapacityModel
 from .budgets import ResourceBudgets
 from .vendors import DynamoCapacity, product_profile
 from .platforms import PlatformModel
+from .cache_connections import CacheConnections
 
 
 @dataclass
@@ -52,6 +53,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
     dynamo_capacity = DynamoCapacity(arch, request, result, fail)
     platforms = PlatformModel(arch, request, result, fail)
 
+    cache_connections = CacheConnections(arch, result, budgets, fail)
     pulled = set()
     asset_loads = {}
 
@@ -179,19 +181,26 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
             elif edge.kind in {"reads", "writes"}:
                 if target.kind == "cache":
                     transport(edge, target)
+                    cache_connections.charge(edge, target)
                     platforms.cache(target)
                     mark(target)
                     if target.name not in result.accessed:
                         result.accessed.append(target.name)
                     cache_result = request.get("cache_result", "miss")
                     result.trace.append(f"Cache {target.name}: {'write' if edge.kind == 'writes' else cache_result}")
-                    if edge.kind == "reads" and cache_result == "miss":
+                    failure = cache_result == "error"
+                    missing = edge.kind == "reads" and cache_result == "miss"
+                    if failure and edge.properties.get("on_error", "fail") == "fail":
+                        fail("CACHE_UNAVAILABLE", node=target.name)
+                    if missing and edge.properties.get("on_miss", "fallback") == "fail":
+                        fail("CACHE_MISS", node=target.name)
+                    if failure or missing:
                         if target.name in active:
                             fail("REQUEST_CYCLE", name=target.name)
                         active.add(target.name)
                         try:
                             if not arch.outgoing(target.name, "invokes"):
-                                fail("SCALING_MODEL_INCOMPLETE", detail=f"Cache miss at {target.name} needs an invokes fallback")
+                                fail("SCALING_MODEL_INCOMPLETE", detail=f"Cache {cache_result} at {target.name} needs an invokes fallback")
                             dependencies(target)
                         finally:
                             active.remove(target.name)
@@ -382,6 +391,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
         if "image_pulls_rps" in request and not any(arch.nodes[name].properties.get("kind") == "container_registry" for name in asset_loads):
             fail("SCALING_MODEL_INCOMPLETE", detail="image_pulls_rps requires an executed service with image_from")
         capacity_model.evaluate(other_workload=any(arch.nodes[name].properties.get("product") == "s3" for name in asset_loads))
+        cache_connections.evaluate()
         budgets.evaluate()
         dynamo_capacity.evaluate()
         platforms.evaluate()

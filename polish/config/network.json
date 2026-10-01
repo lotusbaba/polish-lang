@@ -42,7 +42,10 @@
         "ttl",
         "upstream_protocol",
         "provider",
-        "product"
+        "product",
+        "max_connections_per_instance",
+        "reserved_connections_per_instance",
+        "nodes"
       ],
       "parents": []
     }

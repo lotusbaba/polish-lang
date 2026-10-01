@@ -44,6 +44,16 @@
       "suggestions": [
         "Compare traffic shaping with a revised rate policy, and verify downstream capacity before increasing the limit."
       ]
+    },
+    "CACHE_CONNECTION_BUDGET_EXCEEDED": {
+      "suggestions": [
+        "Review client pool size, worker count, and pool distribution. Per-node pools multiply connections to every node; adding cache nodes does not divide that demand. Compare bounded smaller pools and rerun the proposal."
+      ]
+    },
+    "CACHE_UNAVAILABLE": {
+      "suggestions": [
+        "Evaluate an explicit cache-error fallback and its downstream capacity. A miss fallback does not automatically handle cache errors."
+      ]
     }
   }
 }

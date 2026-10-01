@@ -144,7 +144,12 @@
       "read_from",
       "consistency",
       "cpu_ms",
-      "item_bytes"
+      "item_bytes",
+      "pool_size",
+      "pool_scope",
+      "pool_distribution",
+      "on_miss",
+      "on_error"
     ],
     "writes": [
       "via",
@@ -152,7 +157,11 @@
       "path",
       "durability",
       "cpu_ms",
-      "item_bytes"
+      "item_bytes",
+      "pool_size",
+      "pool_scope",
+      "pool_distribution",
+      "on_error"
     ],
     "submits_to": [
       "job_cpu_ms"
@@ -188,6 +197,22 @@
       "memory",
       "disk",
       "replicated"
+    ],
+    "pool_scope": [
+      "instance",
+      "worker"
+    ],
+    "pool_distribution": [
+      "per_node",
+      "cluster_even"
+    ],
+    "on_miss": [
+      "fallback",
+      "fail"
+    ],
+    "on_error": [
+      "fallback",
+      "fail"
     ]
   },
   "connection_entries": [

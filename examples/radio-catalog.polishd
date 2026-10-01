@@ -1,0 +1,41 @@
+architecture Radio {
+  compute_pool ApiHosts { provider = aws instance_type = "m7i.large" instances = 2..20 }
+  compute_pool CacheHosts { provider = self_hosted vcpus = 2 memory_gib = 4 instances = 3 }
+  service CatalogAPI {
+    hosted_on ApiHosts
+    workers_per_instance = 8
+    operation stations {
+      method = GET path = "/stations" cpu_ms = 1
+      reads StationCache {
+        pool_size = 50 pool_scope = worker pool_distribution = per_node
+        on_miss = fallback on_error = fail
+      }
+    }
+  }
+  cache StationCache {
+    provider = self_hosted product = memcached hosted_on CacheHosts
+    capacity_mib = 512 dataset_mib = 100 max_ops_rps = 10000
+    max_connections_per_instance = 5000 reserved_connections_per_instance = 200
+    invokes CatalogSource.load
+  }
+  service CatalogSource {
+    hosted_on ApiHosts
+    operation load { cpu_ms = 2 }
+  }
+}
+scenario "Normal catalog cache hit" {
+  request { entry = CatalogAPI protocol = http path = "/stations" rate_rps = 100 scale = minimum cache_result = hit }
+  expect { outcome = success accesses StationCache }
+}
+scenario "Scaling API exhausts cache connection budget" {
+  request { entry = CatalogAPI protocol = http path = "/stations" rate_rps = 100 scale = maximum cache_result = hit }
+  expect { outcome = error error = CACHE_CONNECTION_BUDGET_EXCEEDED }
+}
+scenario "Cache miss loads catalog from source" {
+  request { entry = CatalogAPI protocol = http path = "/stations" rate_rps = 100 cache_result = miss }
+  expect { outcome = success reaches CatalogSource.load }
+}
+scenario "Cache failure propagates to catalog API" {
+  request { entry = CatalogAPI protocol = http path = "/stations" rate_rps = 100 cache_result = error }
+  expect { outcome = error error = CACHE_UNAVAILABLE }
+}
