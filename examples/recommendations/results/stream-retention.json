@@ -1,0 +1,1778 @@
+{
+  "ok": false,
+  "diagnostics": [],
+  "changes": {
+    "components": [
+      {
+        "component": "Audio",
+        "before": {
+          "name": "Audio",
+          "kind": "stream",
+          "parent": null,
+          "properties": {
+            "provider": "self_hosted",
+            "product": "redis_stream",
+            "retention_messages": 240,
+            "source_rate_rps": 8,
+            "max_messages_rps": 1000,
+            "engine": "redis"
+          },
+          "requirements": [],
+          "fields": {}
+        },
+        "after": {
+          "name": "Audio",
+          "kind": "stream",
+          "parent": null,
+          "properties": {
+            "provider": "self_hosted",
+            "product": "redis_stream",
+            "retention_messages": 160,
+            "source_rate_rps": 8,
+            "max_messages_rps": 1000,
+            "engine": "redis"
+          },
+          "requirements": [],
+          "fields": {}
+        }
+      }
+    ],
+    "removed_edges": [],
+    "added_edges": []
+  },
+  "impact": [
+    {
+      "component": "API",
+      "changed": false,
+      "path": [
+        {
+          "source": "Audio",
+          "relation": "reverse:consumes_from",
+          "target": "API.live"
+        },
+        {
+          "source": "API.live",
+          "relation": "reverse:contains",
+          "target": "API"
+        }
+      ]
+    },
+    {
+      "component": "API.live",
+      "changed": false,
+      "path": [
+        {
+          "source": "Audio",
+          "relation": "reverse:consumes_from",
+          "target": "API.live"
+        }
+      ]
+    },
+    {
+      "component": "Apps",
+      "changed": false,
+      "path": [
+        {
+          "source": "Audio",
+          "relation": "reverse:consumes_from",
+          "target": "API.live"
+        },
+        {
+          "source": "API.live",
+          "relation": "reverse:contains",
+          "target": "API"
+        },
+        {
+          "source": "API",
+          "relation": "hosted_on",
+          "target": "Apps"
+        }
+      ]
+    },
+    {
+      "component": "Audio",
+      "changed": true,
+      "path": []
+    },
+    {
+      "component": "RedisHost",
+      "changed": false,
+      "path": [
+        {
+          "source": "Audio",
+          "relation": "hosted_on",
+          "target": "RedisHost"
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "scenario": "Preserve audio for a slow consumer",
+      "origin": "before",
+      "request": {
+        "entry": "API",
+        "protocol": "http",
+        "path": "/live",
+        "concurrent_connections": 1,
+        "consumer_lag_seconds": 21
+      },
+      "status": "introduced",
+      "before": {
+        "scenario": "Preserve audio for a slow consumer",
+        "passed": true,
+        "outcome": "success",
+        "error": null,
+        "trace": [
+          "HTTP accepted by API",
+          "API runs on Apps",
+          "API.live executes on Apps",
+          "TCP accepted by Audio",
+          "TCP accepted by RedisHost",
+          "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+          "stream_connections RedisHost: demand=1; capacity=90",
+          "retention_messages Audio: demand=168; capacity=240",
+          "broadcast_deliveries Audio: demand=8; capacity=1000",
+          "Response returned to caller"
+        ],
+        "reached": [
+          "API",
+          "Apps",
+          "API.live",
+          "Audio",
+          "RedisHost"
+        ],
+        "accessed": [],
+        "failures": [],
+        "capacity": [],
+        "budgets": [
+          {
+            "resource": "RedisHost",
+            "kind": "stream_connections",
+            "demand": 1,
+            "capacity": 90,
+            "overloaded": false
+          },
+          {
+            "resource": "Audio",
+            "kind": "retention_messages",
+            "demand": 168,
+            "capacity": 240,
+            "overloaded": false
+          },
+          {
+            "resource": "Audio",
+            "kind": "broadcast_deliveries",
+            "demand": 8,
+            "capacity": 1000,
+            "overloaded": false
+          }
+        ],
+        "diagnostics": []
+      },
+      "after": {
+        "scenario": "Preserve audio for a slow consumer",
+        "passed": false,
+        "outcome": "error",
+        "error": "STREAM_RETENTION_EXCEEDED",
+        "trace": [
+          "HTTP accepted by API",
+          "API runs on Apps",
+          "API.live executes on Apps",
+          "TCP accepted by Audio",
+          "TCP accepted by RedisHost",
+          "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+          "stream_connections RedisHost: demand=1; capacity=90",
+          "retention_messages Audio: demand=168; capacity=160",
+          "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+        ],
+        "reached": [
+          "API",
+          "Apps",
+          "API.live",
+          "Audio",
+          "RedisHost"
+        ],
+        "accessed": [],
+        "failures": [
+          "Expected success, received error."
+        ],
+        "capacity": [],
+        "budgets": [
+          {
+            "resource": "RedisHost",
+            "kind": "stream_connections",
+            "demand": 1,
+            "capacity": 90,
+            "overloaded": false
+          },
+          {
+            "resource": "Audio",
+            "kind": "retention_messages",
+            "demand": 168,
+            "capacity": 160,
+            "overloaded": true
+          },
+          {
+            "resource": "Audio",
+            "kind": "broadcast_deliveries",
+            "demand": 8,
+            "capacity": 1000,
+            "overloaded": false
+          }
+        ],
+        "diagnostics": [
+          {
+            "rule": "STREAM_RETENTION_EXCEEDED",
+            "code": "STREAM_RETENTION_EXCEEDED",
+            "message": "Audio: lag requires 168 messages but retention is 160.",
+            "context": {
+              "error_rule": "STREAM_RETENTION_EXCEEDED",
+              "object": "Audio",
+              "component": "stream",
+              "provider": "self_hosted",
+              "product": "redis_stream",
+              "definition_owner": "Audio",
+              "template_origin": "generic",
+              "parameters": {
+                "node": "Audio",
+                "demand": 168,
+                "capacity": 160
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "category": "required",
+      "scenario": "Preserve audio for a slow consumer",
+      "status": "introduced",
+      "code": "STREAM_RETENTION_EXCEEDED",
+      "evidence": [
+        "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160.",
+        "Expected success, received error.",
+        "Audio: lag requires 168 messages but retention is 160."
+      ],
+      "budgets": [
+        {
+          "resource": "RedisHost",
+          "kind": "stream_connections",
+          "demand": 1,
+          "capacity": 90,
+          "overloaded": false
+        },
+        {
+          "resource": "Audio",
+          "kind": "retention_messages",
+          "demand": 168,
+          "capacity": 160,
+          "overloaded": true
+        },
+        {
+          "resource": "Audio",
+          "kind": "broadcast_deliveries",
+          "demand": 8,
+          "capacity": 1000,
+          "overloaded": false
+        }
+      ],
+      "capacity": [],
+      "diagnostics": [
+        {
+          "rule": "STREAM_RETENTION_EXCEEDED",
+          "code": "STREAM_RETENTION_EXCEEDED",
+          "message": "Audio: lag requires 168 messages but retention is 160.",
+          "context": {
+            "error_rule": "STREAM_RETENTION_EXCEEDED",
+            "object": "Audio",
+            "component": "stream",
+            "provider": "self_hosted",
+            "product": "redis_stream",
+            "definition_owner": "Audio",
+            "template_origin": "generic",
+            "parameters": {
+              "node": "Audio",
+              "demand": 168,
+              "capacity": 160
+            }
+          }
+        }
+      ],
+      "suggestions": [
+        "Compare consumer lag against the declared retention window. Increase retention only with a corresponding memory budget, or reduce consumer lag."
+      ]
+    }
+  ],
+  "limitations": [
+    "Impact paths indicate possible effects, not proven failures.",
+    "Suggestions are alternatives for review; text suggestions are unvalidated; supplied candidate specifications are checked below, but no edits are applied.",
+    "Simulations stop at the first runtime failure; further bottlenecks may remain.",
+    "Recommendation eligibility covers declared scenarios only; no edits are applied. The objective and candidate trade-offs may require additional measurement."
+  ],
+  "recommendations": {
+    "status": "selected",
+    "objective": "Cover the declared 21-second lag, choosing the smallest offered passing retention allocation. Do not assume memory requirements are verified.",
+    "candidates": [
+      {
+        "id": "retain-240",
+        "description": "Retain 240 messages (30 seconds at eight messages/sec); smaller retention allocation than 480. Memory bytes are not modeled here.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=240",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 240,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=240",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 240,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Audio",
+                  "before": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 160,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 240,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.live",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "hosted_on",
+                    "target": "Apps"
+                  }
+                ]
+              },
+              {
+                "component": "Audio",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "RedisHost",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "hosted_on",
+                    "target": "RedisHost"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "STREAM_RETENTION_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=160",
+                    "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 160,
+                      "overloaded": true
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "STREAM_RETENTION_EXCEEDED",
+                      "code": "STREAM_RETENTION_EXCEEDED",
+                      "message": "Audio: lag requires 168 messages but retention is 160.",
+                      "context": {
+                        "error_rule": "STREAM_RETENTION_EXCEEDED",
+                        "object": "Audio",
+                        "component": "stream",
+                        "provider": "self_hosted",
+                        "product": "redis_stream",
+                        "definition_owner": "Audio",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "node": "Audio",
+                          "demand": 168,
+                          "capacity": 160
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=240",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 240,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "retain-480",
+        "description": "Retain 480 messages (60 seconds at eight messages/sec); more lag headroom, with greater unmeasured memory requirements.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Audio",
+                  "before": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 240,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 480,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.live",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "hosted_on",
+                    "target": "Apps"
+                  }
+                ]
+              },
+              {
+                "component": "Audio",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "RedisHost",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "hosted_on",
+                    "target": "RedisHost"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=240",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 240,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=480",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 480,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Audio",
+                  "before": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 160,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 480,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.live",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "hosted_on",
+                    "target": "Apps"
+                  }
+                ]
+              },
+              {
+                "component": "Audio",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "RedisHost",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "hosted_on",
+                    "target": "RedisHost"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "STREAM_RETENTION_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=160",
+                    "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 160,
+                      "overloaded": true
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "STREAM_RETENTION_EXCEEDED",
+                      "code": "STREAM_RETENTION_EXCEEDED",
+                      "message": "Audio: lag requires 168 messages but retention is 160.",
+                      "context": {
+                        "error_rule": "STREAM_RETENTION_EXCEEDED",
+                        "object": "Audio",
+                        "component": "stream",
+                        "provider": "self_hosted",
+                        "product": "redis_stream",
+                        "definition_owner": "Audio",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "node": "Audio",
+                          "demand": 168,
+                          "capacity": 160
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=480",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 480,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "unchanged",
+        "description": "Retain 160 messages, which cannot cover the declared 21-second lag.",
+        "eligible": false,
+        "validation": {
+          "baseline": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Audio",
+                  "before": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 240,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Audio",
+                    "kind": "stream",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "retention_messages": 160,
+                      "source_rate_rps": 8,
+                      "max_messages_rps": 1000,
+                      "engine": "redis"
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.live",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "reverse:consumes_from",
+                    "target": "API.live"
+                  },
+                  {
+                    "source": "API.live",
+                    "relation": "reverse:contains",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "hosted_on",
+                    "target": "Apps"
+                  }
+                ]
+              },
+              {
+                "component": "Audio",
+                "changed": true,
+                "path": []
+              },
+              {
+                "component": "RedisHost",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Audio",
+                    "relation": "hosted_on",
+                    "target": "RedisHost"
+                  }
+                ]
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "introduced",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=240",
+                    "broadcast_deliveries Audio: demand=8; capacity=1000",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 240,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "STREAM_RETENTION_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=160",
+                    "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 160,
+                      "overloaded": true
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "STREAM_RETENTION_EXCEEDED",
+                      "code": "STREAM_RETENTION_EXCEEDED",
+                      "message": "Audio: lag requires 168 messages but retention is 160.",
+                      "context": {
+                        "error_rule": "STREAM_RETENTION_EXCEEDED",
+                        "object": "Audio",
+                        "component": "stream",
+                        "provider": "self_hosted",
+                        "product": "redis_stream",
+                        "definition_owner": "Audio",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "node": "Audio",
+                          "demand": 168,
+                          "capacity": 160
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Preserve audio for a slow consumer",
+                "status": "introduced",
+                "code": "STREAM_RETENTION_EXCEEDED",
+                "evidence": [
+                  "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160.",
+                  "Expected success, received error.",
+                  "Audio: lag requires 168 messages but retention is 160."
+                ],
+                "budgets": [
+                  {
+                    "resource": "RedisHost",
+                    "kind": "stream_connections",
+                    "demand": 1,
+                    "capacity": 90,
+                    "overloaded": false
+                  },
+                  {
+                    "resource": "Audio",
+                    "kind": "retention_messages",
+                    "demand": 168,
+                    "capacity": 160,
+                    "overloaded": true
+                  },
+                  {
+                    "resource": "Audio",
+                    "kind": "broadcast_deliveries",
+                    "demand": 8,
+                    "capacity": 1000,
+                    "overloaded": false
+                  }
+                ],
+                "capacity": [],
+                "diagnostics": [
+                  {
+                    "rule": "STREAM_RETENTION_EXCEEDED",
+                    "code": "STREAM_RETENTION_EXCEEDED",
+                    "message": "Audio: lag requires 168 messages but retention is 160.",
+                    "context": {
+                      "error_rule": "STREAM_RETENTION_EXCEEDED",
+                      "object": "Audio",
+                      "component": "stream",
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "definition_owner": "Audio",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "node": "Audio",
+                        "demand": 168,
+                        "capacity": 160
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Compare consumer lag against the declared retention window. Increase retention only with a corresponding memory budget, or reduce consumer lag."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [],
+            "comparisons": [
+              {
+                "scenario": "Preserve audio for a slow consumer",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/live",
+                  "concurrent_connections": 1,
+                  "consumer_lag_seconds": 21
+                },
+                "status": "persists",
+                "before": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "STREAM_RETENTION_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=160",
+                    "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 160,
+                      "overloaded": true
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "STREAM_RETENTION_EXCEEDED",
+                      "code": "STREAM_RETENTION_EXCEEDED",
+                      "message": "Audio: lag requires 168 messages but retention is 160.",
+                      "context": {
+                        "error_rule": "STREAM_RETENTION_EXCEEDED",
+                        "object": "Audio",
+                        "component": "stream",
+                        "provider": "self_hosted",
+                        "product": "redis_stream",
+                        "definition_owner": "Audio",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "node": "Audio",
+                          "demand": 168,
+                          "capacity": 160
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Preserve audio for a slow consumer",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "STREAM_RETENTION_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.live executes on Apps",
+                    "TCP accepted by Audio",
+                    "TCP accepted by RedisHost",
+                    "API.live consumes_from Audio: independent broadcast cursors; reads do not remove messages",
+                    "stream_connections RedisHost: demand=1; capacity=90",
+                    "retention_messages Audio: demand=168; capacity=160",
+                    "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.live",
+                    "Audio",
+                    "RedisHost"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [],
+                  "budgets": [
+                    {
+                      "resource": "RedisHost",
+                      "kind": "stream_connections",
+                      "demand": 1,
+                      "capacity": 90,
+                      "overloaded": false
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "retention_messages",
+                      "demand": 168,
+                      "capacity": 160,
+                      "overloaded": true
+                    },
+                    {
+                      "resource": "Audio",
+                      "kind": "broadcast_deliveries",
+                      "demand": 8,
+                      "capacity": 1000,
+                      "overloaded": false
+                    }
+                  ],
+                  "diagnostics": [
+                    {
+                      "rule": "STREAM_RETENTION_EXCEEDED",
+                      "code": "STREAM_RETENTION_EXCEEDED",
+                      "message": "Audio: lag requires 168 messages but retention is 160.",
+                      "context": {
+                        "error_rule": "STREAM_RETENTION_EXCEEDED",
+                        "object": "Audio",
+                        "component": "stream",
+                        "provider": "self_hosted",
+                        "product": "redis_stream",
+                        "definition_owner": "Audio",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "node": "Audio",
+                          "demand": 168,
+                          "capacity": 160
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Preserve audio for a slow consumer",
+                "status": "persists",
+                "code": "STREAM_RETENTION_EXCEEDED",
+                "evidence": [
+                  "STREAM_RETENTION_EXCEEDED: Audio: lag requires 168 messages but retention is 160.",
+                  "Expected success, received error.",
+                  "Audio: lag requires 168 messages but retention is 160."
+                ],
+                "budgets": [
+                  {
+                    "resource": "RedisHost",
+                    "kind": "stream_connections",
+                    "demand": 1,
+                    "capacity": 90,
+                    "overloaded": false
+                  },
+                  {
+                    "resource": "Audio",
+                    "kind": "retention_messages",
+                    "demand": 168,
+                    "capacity": 160,
+                    "overloaded": true
+                  },
+                  {
+                    "resource": "Audio",
+                    "kind": "broadcast_deliveries",
+                    "demand": 8,
+                    "capacity": 1000,
+                    "overloaded": false
+                  }
+                ],
+                "capacity": [],
+                "diagnostics": [
+                  {
+                    "rule": "STREAM_RETENTION_EXCEEDED",
+                    "code": "STREAM_RETENTION_EXCEEDED",
+                    "message": "Audio: lag requires 168 messages but retention is 160.",
+                    "context": {
+                      "error_rule": "STREAM_RETENTION_EXCEEDED",
+                      "object": "Audio",
+                      "component": "stream",
+                      "provider": "self_hosted",
+                      "product": "redis_stream",
+                      "definition_owner": "Audio",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "node": "Audio",
+                        "demand": 168,
+                        "capacity": 160
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Compare consumer lag against the declared retention window. Increase retention only with a corresponding memory budget, or reduce consumer lag."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      }
+    ],
+    "selected": "retain-240",
+    "selection": "model",
+    "model_calls": 1,
+    "probabilities": {
+      "retain-240": 1,
+      "retain-480": 0
+    },
+    "confidence_interval": null,
+    "confidence_interval_reason": "No independent labeled evaluation data; choice probabilities are not confidence intervals.",
+    "probability_interpretation": "Uncalibrated model preference among eligible alternatives, not probability of production success.",
+    "model": "typesafe/jev-1.13-20260917"
+  }
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "retain-240",
+    "description": "Retain 240 messages (30 seconds at eight messages/sec); smaller retention allocation than 480. Memory bytes are not modeled here.",
+    "file": "retain-240.polishd"
+  },
+  {
+    "id": "retain-480",
+    "description": "Retain 480 messages (60 seconds at eight messages/sec); more lag headroom, with greater unmeasured memory requirements.",
+    "file": "retain-480.polishd"
+  },
+  {
+    "id": "unchanged",
+    "description": "Retain 160 messages, which cannot cover the declared 21-second lag.",
+    "file": "unchanged.polishd"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "smaller-pools",
+    "description": "Keep eight application instances and reduce each pool from 50 to 30 connections; reduces pool headroom.",
+    "file": "smaller-pools.polishd"
+  },
+  {
+    "id": "fewer-instances",
+    "description": "Reduce application instances from eight to four, retaining pools of 50; reduces modeled compute headroom.",
+    "file": "fewer-instances.polishd"
+  },
+  {
+    "id": "unchanged",
+    "description": "Keep the failing eight instances with pools of 50.",
+    "file": "unchanged.polishd"
+  }
+]

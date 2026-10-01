@@ -1,0 +1,11 @@
+// Synthetic retention inputs, not measured deployment behavior.
+architecture RetentionChoices {
+  compute_pool RedisHost { instances = 1 max_stream_connections = 100 reserved_stream_connections = 10 }
+  stream Audio { provider = self_hosted product = redis_stream hosted_on RedisHost retention_messages = 240 source_rate_rps = 8 max_messages_rps = 1000 }
+  compute_pool Apps { instances = 1 }
+  service API { hosted_on Apps operation live { method = GET path = "/live" consumes_from Audio } }
+}
+scenario "Preserve audio for a slow consumer" {
+  request { entry = API protocol = http path = "/live" concurrent_connections = 1 consumer_lag_seconds = 21 }
+  expect { outcome = success reaches Audio }
+}

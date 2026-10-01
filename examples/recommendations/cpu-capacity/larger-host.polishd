@@ -1,0 +1,8 @@
+architecture CpuChoices {
+  compute_pool Apps { provider = self_hosted vcpus = 4 memory_gib = 4 instances = 1 cpu_utilization = 0.7 }
+  service API { hosted_on Apps operation calculate { method = GET path = "/calculate" cpu_ms = 10 } }
+}
+scenario "Calculate within CPU capacity" {
+  request { entry = API protocol = http path = "/calculate" rate_rps = 200 }
+  expect { outcome = success reaches API.calculate }
+}

@@ -1,0 +1,21 @@
+architecture Checkout {
+  compute_pool Apps { provider = aws instance_type = "m7i.large" instances = 8 }
+  service Api {
+    hosted_on Apps
+    connection_pool_size = 30
+    operation buy {
+      method = POST path = "/buy" cpu_ms = 1
+      writes Orders.Items { cpu_ms = 1 }
+    }
+  }
+  database Orders {
+    kind = relational max_connections = 300
+    hosted_on Storage
+    table Items { id: uuid primary_key }
+  }
+  database_cluster Storage { provider = aws instance_type = "m7i.large" engine = postgres replicas = 1 }
+}
+scenario "Checkout remains within capacity" {
+  request { entry = Api protocol = http method = POST path = "/buy" rate_rps = 10 }
+  expect { outcome = success reaches Orders }
+}

@@ -16,14 +16,36 @@ def main(argv=None) -> int:
     parser.add_argument("--json", action="store_true", help="Emit machine-readable diagnostics and traces")
     parser.add_argument("--scenario", help="Run one named scenario")
     parser.add_argument("--config-dir", type=Path, help="Directory containing language definition JSON files")
+    parser.add_argument("--candidates", type=Path, help="JSON manifest of candidate changes for plan")
+    parser.add_argument("--objective", help="Objective for choosing among validated candidate changes")
+    parser.add_argument("--decision-provider", choices=["none", "jev"], default="none",
+                        help="Optional recommendation model; none performs offline candidate checks")
+    parser.add_argument("--choice-evaluation", type=Path, help="Independent labeled evaluation JSON for historical choice accuracy intervals")
     args = parser.parse_args(argv)
+    if (args.candidates or args.objective or args.decision_provider != "none") and args.command != "plan":
+        parser.error("recommendation options are only supported with plan")
+    if bool(args.candidates) != bool(args.objective):
+        parser.error("--candidates and --objective must be supplied together")
+    if args.decision_provider != "none" and not args.candidates:
+        parser.error("--decision-provider requires --candidates and --objective")
+    if args.choice_evaluation and (not args.candidates or args.decision_provider == "none"):
+        parser.error("--choice-evaluation requires candidates and a decision provider")
     if args.command == "plan":
         if args.proposed is None:
             parser.error("plan requires --proposed FILE")
         from .planner import plan
+        from .recommendations import recommend, load_candidates, JevDecisionModel
+        from .choice_evaluation import load_evaluation
         try:
-            payload = plan(args.file.read_text(), args.proposed.read_text(), config_dir=args.config_dir, scenario_name=args.scenario)
-        except (OSError, UnicodeError, ConfigurationError) as exc:
+            if args.candidates:
+                payload = recommend(args.file.read_text(), args.proposed.read_text(),
+                                    load_candidates(args.candidates), objective=args.objective,
+                                    model=JevDecisionModel() if args.decision_provider == "jev" else None,
+                                    config_dir=args.config_dir, scenario_name=args.scenario,
+                                    evaluation=load_evaluation(args.choice_evaluation) if args.choice_evaluation else None)
+            else:
+                payload = plan(args.file.read_text(), args.proposed.read_text(), config_dir=args.config_dir, scenario_name=args.scenario)
+        except (OSError, UnicodeError, ConfigurationError, ValueError) as exc:
             payload = {"ok": False, "diagnostics": [{"message": str(exc)}]}
         if args.json:
             print(json.dumps(payload, indent=2))
@@ -38,6 +60,21 @@ def main(argv=None) -> int:
                 print(f"  Evidence: {finding.get('evidence', '')}")
                 for suggestion in finding.get("suggestions", []):
                     print(f"  Suggestion: {suggestion}")
+            advice = payload.get("recommendations")
+            if advice:
+                print(f"Recommendations: {advice['status']}")
+                for candidate in advice['candidates']:
+                    print(f"  {candidate['id']}: {'eligible' if candidate['eligible'] else 'rejected'} — {candidate['description']}")
+                print(f"  Selected: {advice['selected']} ({advice['selection']})")
+                if advice['probabilities'] is not None:
+                    print(f"  Choice probabilities (uncalibrated): {advice['probabilities']}")
+                if advice.get('choice_evaluation'):
+                    print("  Historical choice accuracy: " + json.dumps(advice['choice_evaluation']))
+                if advice.get('evaluation_error'):
+                    print(f"  Evaluation unavailable: {advice['evaluation_error']}")
+                if advice.get('error'):
+                    print(f"  Model error: {advice['error']}")
+                print(f"  Confidence interval: unavailable. {advice['confidence_interval_reason']}")
             for limitation in payload.get("limitations", []):
                 print(f"Note: {limitation}")
         return 0 if payload["ok"] else 1

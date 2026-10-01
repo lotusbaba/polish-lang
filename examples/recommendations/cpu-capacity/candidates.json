@@ -1,0 +1,17 @@
+[
+  {
+    "id": "more-instances",
+    "description": "Use two instances, preserving the current two-vCPU host size.",
+    "file": "more-instances.polishd"
+  },
+  {
+    "id": "larger-host",
+    "description": "Use one four-vCPU host; preserves instance count but changes host size.",
+    "file": "larger-host.polishd"
+  },
+  {
+    "id": "unchanged",
+    "description": "Keep the overloaded single two-vCPU instance.",
+    "file": "unchanged.polishd"
+  }
+]

@@ -1,0 +1,1382 @@
+{
+  "ok": false,
+  "diagnostics": [],
+  "changes": {
+    "components": [
+      {
+        "component": "Apps",
+        "before": {
+          "name": "Apps",
+          "kind": "compute_pool",
+          "parent": null,
+          "properties": {
+            "provider": "self_hosted",
+            "vcpus": 2,
+            "memory_gib": 4,
+            "instances": 2,
+            "cpu_utilization": 0.7
+          },
+          "requirements": [],
+          "fields": {}
+        },
+        "after": {
+          "name": "Apps",
+          "kind": "compute_pool",
+          "parent": null,
+          "properties": {
+            "provider": "self_hosted",
+            "vcpus": 2,
+            "memory_gib": 4,
+            "instances": 1,
+            "cpu_utilization": 0.7
+          },
+          "requirements": [],
+          "fields": {}
+        }
+      }
+    ],
+    "removed_edges": [],
+    "added_edges": []
+  },
+  "impact": [
+    {
+      "component": "API",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "API"
+        }
+      ]
+    },
+    {
+      "component": "API.calculate",
+      "changed": false,
+      "path": [
+        {
+          "source": "Apps",
+          "relation": "reverse:hosted_on",
+          "target": "API"
+        },
+        {
+          "source": "API",
+          "relation": "contains",
+          "target": "API.calculate"
+        }
+      ]
+    },
+    {
+      "component": "Apps",
+      "changed": true,
+      "path": []
+    }
+  ],
+  "comparisons": [
+    {
+      "scenario": "Calculate within CPU capacity",
+      "origin": "before",
+      "request": {
+        "entry": "API",
+        "protocol": "http",
+        "path": "/calculate",
+        "rate_rps": 200
+      },
+      "status": "introduced",
+      "before": {
+        "scenario": "Calculate within CPU capacity",
+        "passed": true,
+        "outcome": "success",
+        "error": null,
+        "trace": [
+          "HTTP accepted by API",
+          "API runs on Apps",
+          "API.calculate executes on Apps",
+          "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+          "Response returned to caller"
+        ],
+        "reached": [
+          "API",
+          "Apps",
+          "API.calculate"
+        ],
+        "accessed": [],
+        "failures": [],
+        "capacity": [
+          {
+            "resource": "Apps",
+            "instance_type": "self_hosted",
+            "instances": 2,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 2000,
+            "capacity_cpu_ms_per_second": 2800.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": true,
+            "required_instances": 2,
+            "overloaded": false
+          }
+        ],
+        "budgets": [],
+        "diagnostics": []
+      },
+      "after": {
+        "scenario": "Calculate within CPU capacity",
+        "passed": false,
+        "outcome": "error",
+        "error": "CAPACITY_EXCEEDED",
+        "trace": [
+          "HTTP accepted by API",
+          "API runs on Apps",
+          "API.calculate executes on Apps",
+          "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+          "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+        ],
+        "reached": [
+          "API",
+          "Apps",
+          "API.calculate"
+        ],
+        "accessed": [],
+        "failures": [
+          "Expected success, received error."
+        ],
+        "capacity": [
+          {
+            "resource": "Apps",
+            "instance_type": "self_hosted",
+            "instances": 1,
+            "vcpus_per_instance": 2,
+            "cpu_utilization": 0.7,
+            "demand_cpu_ms_per_second": 2000,
+            "capacity_cpu_ms_per_second": 1400.0,
+            "per_instance_cpu_ms_per_second": 1400.0,
+            "horizontal_scaling": true,
+            "required_instances": 2,
+            "overloaded": true
+          }
+        ],
+        "budgets": [],
+        "diagnostics": [
+          {
+            "rule": "CAPACITY_EXCEEDED",
+            "code": "CAPACITY_EXCEEDED",
+            "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+            "context": {
+              "error_rule": "CAPACITY_EXCEEDED",
+              "object": "Apps",
+              "component": "compute_pool",
+              "provider": "self_hosted",
+              "product": "unspecified",
+              "definition_owner": "Apps",
+              "template_origin": "generic",
+              "parameters": {
+                "resource": "Apps",
+                "demand": 2000,
+                "capacity": 1400.0,
+                "required": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "findings": [
+    {
+      "category": "required",
+      "scenario": "Calculate within CPU capacity",
+      "status": "introduced",
+      "code": "CAPACITY_EXCEEDED",
+      "evidence": [
+        "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+        "Expected success, received error.",
+        "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+      ],
+      "budgets": [],
+      "capacity": [
+        {
+          "resource": "Apps",
+          "instance_type": "self_hosted",
+          "instances": 1,
+          "vcpus_per_instance": 2,
+          "cpu_utilization": 0.7,
+          "demand_cpu_ms_per_second": 2000,
+          "capacity_cpu_ms_per_second": 1400.0,
+          "per_instance_cpu_ms_per_second": 1400.0,
+          "horizontal_scaling": true,
+          "required_instances": 2,
+          "overloaded": true
+        }
+      ],
+      "diagnostics": [
+        {
+          "rule": "CAPACITY_EXCEEDED",
+          "code": "CAPACITY_EXCEEDED",
+          "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+          "context": {
+            "error_rule": "CAPACITY_EXCEEDED",
+            "object": "Apps",
+            "component": "compute_pool",
+            "provider": "self_hosted",
+            "product": "unspecified",
+            "definition_owner": "Apps",
+            "template_origin": "generic",
+            "parameters": {
+              "resource": "Apps",
+              "demand": 2000,
+              "capacity": 1400.0,
+              "required": 2
+            }
+          }
+        }
+      ],
+      "suggestions": [
+        "Use the reported required_instances as a CPU-only lower bound. Compare more instances with larger hosts, then rerun memory and database connection checks."
+      ]
+    }
+  ],
+  "limitations": [
+    "Impact paths indicate possible effects, not proven failures.",
+    "Suggestions are alternatives for review; text suggestions are unvalidated; supplied candidate specifications are checked below, but no edits are applied.",
+    "Simulations stop at the first runtime failure; further bottlenecks may remain.",
+    "Recommendation eligibility covers declared scenarios only; no edits are applied. The objective and candidate trade-offs may require additional measurement."
+  ],
+  "recommendations": {
+    "status": "selected",
+    "objective": "Satisfy the declared workload while retaining the existing two-vCPU host size. Prefer adding an instance over changing host size.",
+    "candidates": [
+      {
+        "id": "more-instances",
+        "description": "Use two instances, preserving the current two-vCPU host size.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 1,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 2,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.calculate",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "contains",
+                    "target": "API.calculate"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CAPACITY_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+                    "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": true
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": [
+                    {
+                      "rule": "CAPACITY_EXCEEDED",
+                      "code": "CAPACITY_EXCEEDED",
+                      "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                      "context": {
+                        "error_rule": "CAPACITY_EXCEEDED",
+                        "object": "Apps",
+                        "component": "compute_pool",
+                        "provider": "self_hosted",
+                        "product": "unspecified",
+                        "definition_owner": "Apps",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Apps",
+                          "demand": 2000,
+                          "capacity": 1400.0,
+                          "required": 2
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "larger-host",
+        "description": "Use one four-vCPU host; preserves instance count but changes host size.",
+        "eligible": true,
+        "validation": {
+          "baseline": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 2,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 4,
+                      "memory_gib": 4,
+                      "instances": 1,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.calculate",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "contains",
+                    "target": "API.calculate"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "unchanged_pass",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=1; required=1",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 4,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 2800.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": true,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 1,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 4,
+                      "memory_gib": 4,
+                      "instances": 1,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.calculate",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "contains",
+                    "target": "API.calculate"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "resolved",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CAPACITY_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+                    "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": true
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": [
+                    {
+                      "rule": "CAPACITY_EXCEEDED",
+                      "code": "CAPACITY_EXCEEDED",
+                      "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                      "context": {
+                        "error_rule": "CAPACITY_EXCEEDED",
+                        "object": "Apps",
+                        "component": "compute_pool",
+                        "provider": "self_hosted",
+                        "product": "unspecified",
+                        "definition_owner": "Apps",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Apps",
+                          "demand": 2000,
+                          "capacity": 1400.0,
+                          "required": 2
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=1; required=1",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 4,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 2800.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 1,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                }
+              }
+            ],
+            "findings": [],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      },
+      {
+        "id": "unchanged",
+        "description": "Keep the overloaded single two-vCPU instance.",
+        "eligible": false,
+        "validation": {
+          "baseline": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [
+                {
+                  "component": "Apps",
+                  "before": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 2,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  },
+                  "after": {
+                    "name": "Apps",
+                    "kind": "compute_pool",
+                    "parent": null,
+                    "properties": {
+                      "provider": "self_hosted",
+                      "vcpus": 2,
+                      "memory_gib": 4,
+                      "instances": 1,
+                      "cpu_utilization": 0.7
+                    },
+                    "requirements": [],
+                    "fields": {}
+                  }
+                }
+              ],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [
+              {
+                "component": "API",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  }
+                ]
+              },
+              {
+                "component": "API.calculate",
+                "changed": false,
+                "path": [
+                  {
+                    "source": "Apps",
+                    "relation": "reverse:hosted_on",
+                    "target": "API"
+                  },
+                  {
+                    "source": "API",
+                    "relation": "contains",
+                    "target": "API.calculate"
+                  }
+                ]
+              },
+              {
+                "component": "Apps",
+                "changed": true,
+                "path": []
+              }
+            ],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "introduced",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": true,
+                  "outcome": "success",
+                  "error": null,
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=2800; instances=2; required=2",
+                    "Response returned to caller"
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 2,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 2800.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": false
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": []
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CAPACITY_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+                    "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": true
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": [
+                    {
+                      "rule": "CAPACITY_EXCEEDED",
+                      "code": "CAPACITY_EXCEEDED",
+                      "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                      "context": {
+                        "error_rule": "CAPACITY_EXCEEDED",
+                        "object": "Apps",
+                        "component": "compute_pool",
+                        "provider": "self_hosted",
+                        "product": "unspecified",
+                        "definition_owner": "Apps",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Apps",
+                          "demand": 2000,
+                          "capacity": 1400.0,
+                          "required": 2
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Calculate within CPU capacity",
+                "status": "introduced",
+                "code": "CAPACITY_EXCEEDED",
+                "evidence": [
+                  "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                  "Expected success, received error.",
+                  "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                ],
+                "budgets": [],
+                "capacity": [
+                  {
+                    "resource": "Apps",
+                    "instance_type": "self_hosted",
+                    "instances": 1,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 2000,
+                    "capacity_cpu_ms_per_second": 1400.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": true,
+                    "required_instances": 2,
+                    "overloaded": true
+                  }
+                ],
+                "diagnostics": [
+                  {
+                    "rule": "CAPACITY_EXCEEDED",
+                    "code": "CAPACITY_EXCEEDED",
+                    "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                    "context": {
+                      "error_rule": "CAPACITY_EXCEEDED",
+                      "object": "Apps",
+                      "component": "compute_pool",
+                      "provider": "self_hosted",
+                      "product": "unspecified",
+                      "definition_owner": "Apps",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "resource": "Apps",
+                        "demand": 2000,
+                        "capacity": 1400.0,
+                        "required": 2
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Use the reported required_instances as a CPU-only lower bound. Compare more instances with larger hosts, then rerun memory and database connection checks."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          },
+          "proposal": {
+            "ok": false,
+            "diagnostics": [],
+            "changes": {
+              "components": [],
+              "removed_edges": [],
+              "added_edges": []
+            },
+            "impact": [],
+            "comparisons": [
+              {
+                "scenario": "Calculate within CPU capacity",
+                "origin": "before",
+                "request": {
+                  "entry": "API",
+                  "protocol": "http",
+                  "path": "/calculate",
+                  "rate_rps": 200
+                },
+                "status": "persists",
+                "before": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CAPACITY_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+                    "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": true
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": [
+                    {
+                      "rule": "CAPACITY_EXCEEDED",
+                      "code": "CAPACITY_EXCEEDED",
+                      "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                      "context": {
+                        "error_rule": "CAPACITY_EXCEEDED",
+                        "object": "Apps",
+                        "component": "compute_pool",
+                        "provider": "self_hosted",
+                        "product": "unspecified",
+                        "definition_owner": "Apps",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Apps",
+                          "demand": 2000,
+                          "capacity": 1400.0,
+                          "required": 2
+                        }
+                      }
+                    }
+                  ]
+                },
+                "after": {
+                  "scenario": "Calculate within CPU capacity",
+                  "passed": false,
+                  "outcome": "error",
+                  "error": "CAPACITY_EXCEEDED",
+                  "trace": [
+                    "HTTP accepted by API",
+                    "API runs on Apps",
+                    "API.calculate executes on Apps",
+                    "CPU Apps: demand=2000 CPU-ms/s; capacity=1400; instances=1; required=2",
+                    "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                  ],
+                  "reached": [
+                    "API",
+                    "Apps",
+                    "API.calculate"
+                  ],
+                  "accessed": [],
+                  "failures": [
+                    "Expected success, received error."
+                  ],
+                  "capacity": [
+                    {
+                      "resource": "Apps",
+                      "instance_type": "self_hosted",
+                      "instances": 1,
+                      "vcpus_per_instance": 2,
+                      "cpu_utilization": 0.7,
+                      "demand_cpu_ms_per_second": 2000,
+                      "capacity_cpu_ms_per_second": 1400.0,
+                      "per_instance_cpu_ms_per_second": 1400.0,
+                      "horizontal_scaling": true,
+                      "required_instances": 2,
+                      "overloaded": true
+                    }
+                  ],
+                  "budgets": [],
+                  "diagnostics": [
+                    {
+                      "rule": "CAPACITY_EXCEEDED",
+                      "code": "CAPACITY_EXCEEDED",
+                      "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                      "context": {
+                        "error_rule": "CAPACITY_EXCEEDED",
+                        "object": "Apps",
+                        "component": "compute_pool",
+                        "provider": "self_hosted",
+                        "product": "unspecified",
+                        "definition_owner": "Apps",
+                        "template_origin": "generic",
+                        "parameters": {
+                          "resource": "Apps",
+                          "demand": 2000,
+                          "capacity": 1400.0,
+                          "required": 2
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "findings": [
+              {
+                "category": "required",
+                "scenario": "Calculate within CPU capacity",
+                "status": "persists",
+                "code": "CAPACITY_EXCEEDED",
+                "evidence": [
+                  "CAPACITY_EXCEEDED: Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                  "Expected success, received error.",
+                  "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed."
+                ],
+                "budgets": [],
+                "capacity": [
+                  {
+                    "resource": "Apps",
+                    "instance_type": "self_hosted",
+                    "instances": 1,
+                    "vcpus_per_instance": 2,
+                    "cpu_utilization": 0.7,
+                    "demand_cpu_ms_per_second": 2000,
+                    "capacity_cpu_ms_per_second": 1400.0,
+                    "per_instance_cpu_ms_per_second": 1400.0,
+                    "horizontal_scaling": true,
+                    "required_instances": 2,
+                    "overloaded": true
+                  }
+                ],
+                "diagnostics": [
+                  {
+                    "rule": "CAPACITY_EXCEEDED",
+                    "code": "CAPACITY_EXCEEDED",
+                    "message": "Apps: requires 2000 CPU-ms/s, capacity is 1400.0; at least 2 instances needed.",
+                    "context": {
+                      "error_rule": "CAPACITY_EXCEEDED",
+                      "object": "Apps",
+                      "component": "compute_pool",
+                      "provider": "self_hosted",
+                      "product": "unspecified",
+                      "definition_owner": "Apps",
+                      "template_origin": "generic",
+                      "parameters": {
+                        "resource": "Apps",
+                        "demand": 2000,
+                        "capacity": 1400.0,
+                        "required": 2
+                      }
+                    }
+                  }
+                ],
+                "suggestions": [
+                  "Use the reported required_instances as a CPU-only lower bound. Compare more instances with larger hosts, then rerun memory and database connection checks."
+                ]
+              }
+            ],
+            "limitations": [
+              "Impact paths indicate possible effects, not proven failures.",
+              "Suggestions are alternatives for review; no candidate edits are applied or validated.",
+              "Simulations stop at the first runtime failure; further bottlenecks may remain."
+            ]
+          }
+        }
+      }
+    ],
+    "selected": "more-instances",
+    "selection": "model",
+    "model_calls": 1,
+    "probabilities": {
+      "larger-host": 0,
+      "more-instances": 1
+    },
+    "confidence_interval": null,
+    "confidence_interval_reason": "No independent labeled evaluation data; choice probabilities are not confidence intervals.",
+    "probability_interpretation": "Uncalibrated model preference among eligible alternatives, not probability of production success.",
+    "model": "jev-1.13.0"
+  }
+}

@@ -68,6 +68,13 @@ These are deterministic models of declared assumptions, not cloud benchmarks.
 A passing scenario means the modeled request satisfies the modeled constraints;
 it does not establish production performance or reliability.
 
+## Start here
+
+- New to Polish? Follow [Run it](#run-it) for a deterministic simulation; no API key is needed.
+- Comparing architecture changes? See [the recommendation walkthrough](examples/recommendations/README.md) for an offline comparison followed by an optional Jev choice.
+- Inspect a completed example: [decision-model report](examples/recommendations/results/report.html), with linked JSON evidence. Download/open the HTML locally; GitHub's source view does not render it as a report.
+- Troubleshooting your first run? See [the new-user guide](docs/getting-started.md), including virtual environments, credentials, exit codes, and reading reports.
+
 ## Run it
 
 Requires Python 3.11 or newer.
@@ -1227,14 +1234,29 @@ when running `plan`. Ordinary `check` and `simulate` do not require decision rul
 Compiler-invalid designs receive diagnostics and advice without being simulated.
 Cross-design scenarios with incompatible references receive explicit diagnostics.
 
-This first planning iteration proposes advice, not edited candidate architectures.
+The default planner provides textual advice, not edited candidate architectures.
 Suggestions are not automatically applied, ranked, or proven to resolve a failure;
-edit a proposal and rerun the plan to test it. There is no optimization objective,
-cost model, or migration execution engine yet. Simulations stop at the first runtime
+edit a proposal and rerun the plan to test it. Optional candidate recommendations
+add objective-based selection among supplied alternatives. There is no cost model
+or migration execution engine. Simulations stop at the first runtime
 failure, and unobserved affected components are reported as needing information.
 Exit code 0 means all selected requirements pass on the proposed design, not that
 all possible impacts have been tested. Hard constraints currently come from the
 compiler rules and scenario expectations.
+
+### Optional decision-model recommendations
+
+`plan --candidates FILE --objective TEXT --decision-provider jev` evaluates explicit
+candidate specifications against the baseline and proposal requirements, then uses
+Jev to choose among passing alternatives. The original plan result and exit status
+remain unchanged; recommendations never apply edits. Omit the provider for offline
+candidate checks. Install the optional HTTP client with `pip install '.[jev]'`.
+
+See [three executable examples and live results](examples/recommendations/README.md)
+for connection pools, CPU scaling, and streaming retention. Reports separate
+uncalibrated choice probabilities from optional evidence-based historical accuracy
+intervals (`--choice-evaluation`). No confidence interval is invented for a single
+model response. The existing rule engine and ordinary simulations remain deterministic.
 
 ## Cache connections and failure behavior
 
