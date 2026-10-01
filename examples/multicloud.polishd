@@ -1,0 +1,91 @@
+architecture MultiCloud {
+  compute_pool Apps { provider = self_hosted vcpus = 4 memory_gib = 8 instances = 2 }
+  service Catalog {
+    hosted_on Apps
+    connection_pool_size = 20
+    operation notify { method = POST path = "/notify" cpu_ms = 1 publishes_to Notifications }
+    operation stream { method = POST path = "/stream" cpu_ms = 1 publishes_to Events }
+    operation publish { method = POST path = "/publish" cpu_ms = 1 publishes_to Updates }
+    operation consume { method = POST path = "/consume" cpu_ms = 1 consumes_from Indexing }
+    operation cached {
+      method = GET path = "/cached" cpu_ms = 1
+      reads Redis { pool_size = 10 pool_scope = instance pool_distribution = per_node on_miss = fail }
+    }
+    operation query { method = GET path = "/query" cpu_ms = 1 reads CatalogDB.Stations { protocol = tls } }
+  }
+  topic Notifications {
+    provider = aws product = sns topic_type = standard max_messages_rps = 100
+    delivers_to Emails
+  }
+  queue Emails {
+    provider = aws product = sqs queue_type = standard
+    max_messages_rps = 50 consumer_rate_rps = 20 max_backlog = 100
+  }
+  stream Events {
+    provider = aws product = kinesis capacity_mode = provisioned
+    shards = 2 messages_per_shard_rps = 50 consumer_rate_rps = 100 max_backlog = 200
+  }
+  topic Updates {
+    provider = gcp product = pubsub_topic max_messages_rps = 100
+    delivers_to Indexing
+    delivers_to Analytics
+  }
+  queue Indexing {
+    provider = gcp product = pubsub_subscription delivery = pull
+    max_messages_rps = 80 consumer_rate_rps = 10 max_backlog = 50
+  }
+  queue Analytics {
+    provider = gcp product = pubsub_subscription
+    max_messages_rps = 100 consumer_rate_rps = 100 max_backlog = 200
+  }
+  cache Redis {
+    provider = gcp product = memorystore_redis nodes = 1
+    capacity_mib = 512 dataset_mib = 100 max_ops_rps = 100
+    max_connections_per_instance = 100
+  }
+  database CatalogDB {
+    kind = relational max_connections = 100 hosted_on Postgres
+    table Stations { id: uuid primary_key }
+  }
+  database_cluster Postgres { provider = gcp product = cloudsql_postgres max_ops_rps = 50 }
+}
+scenario "SNS delivers to SQS" {
+  request { entry = Catalog protocol = http method = POST path = "/notify" rate_rps = 10 }
+  expect { outcome = success reaches Notifications reaches Emails }
+}
+scenario "SNS destination throttles" {
+  request { entry = Catalog protocol = http method = POST path = "/notify" rate_rps = 51 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "Kinesis shards fit" {
+  request { entry = Catalog protocol = http method = POST path = "/stream" rate_rps = 100 }
+  expect { outcome = success reaches Events }
+}
+scenario "Kinesis needs more capacity" {
+  request { entry = Catalog protocol = http method = POST path = "/stream" rate_rps = 101 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "PubSub fans out" {
+  request { entry = Catalog protocol = http method = POST path = "/publish" rate_rps = 10 }
+  expect { outcome = success reaches Indexing reaches Analytics }
+}
+scenario "PubSub slow subscription accumulates backlog" {
+  request { entry = Catalog protocol = http method = POST path = "/publish" rate_rps = 20 window_seconds = 6 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "Memorystore serves catalog" {
+  request { entry = Catalog protocol = http path = "/cached" rate_rps = 100 cache_result = hit }
+  expect { outcome = success accesses Redis }
+}
+scenario "Memorystore throughput exceeded" {
+  request { entry = Catalog protocol = http path = "/cached" rate_rps = 101 cache_result = hit }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "CloudSQL query fits" {
+  request { entry = Catalog protocol = http path = "/query" rate_rps = 50 }
+  expect { outcome = success accesses CatalogDB.Stations }
+}
+scenario "CloudSQL throughput exceeded" {
+  request { entry = Catalog protocol = http path = "/query" rate_rps = 51 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}

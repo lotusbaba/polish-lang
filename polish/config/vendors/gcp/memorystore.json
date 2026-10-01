@@ -1,0 +1,35 @@
+{
+  "products": {
+    "memorystore_redis": {
+      "component": "cache",
+      "defaults": {
+        "tls": true,
+        "engine": "redis"
+      },
+      "required": [
+        "capacity_mib"
+      ],
+      "properties": [
+        "tls",
+        "capacity_mib",
+        "dataset_mib",
+        "max_ops_rps",
+        "engine"
+      ],
+      "property_types": {
+        "capacity_mib": "positive",
+        "dataset_mib": "nonnegative",
+        "max_ops_rps": "positive"
+      },
+      "managed": true,
+      "protocols": [
+        "tcp",
+        "tls"
+      ]
+    }
+  },
+  "sources": [
+    "https://docs.cloud.google.com/memorystore/docs/redis/memorystore-for-redis-overview"
+  ],
+  "verified_on": "2026-10-01"
+}

@@ -46,6 +46,16 @@ class PlatformModel:
                 self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{host.name} requires measured cluster max_ops_rps")
             self.add(host, "database_ops", self.request["rate_rps"])
 
+    def message_limit(self, node):
+        p = node.properties
+        if p.get("provider") == "aws" and p.get("product") == "kinesis" and p.get("capacity_mode") == "provisioned":
+            if "messages_per_shard_rps" not in p:
+                self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{node.name} requires measured messages_per_shard_rps")
+            return p["shards"] * p["messages_per_shard_rps"]
+        if "max_messages_rps" not in p:
+            self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{node.name} requires max_messages_rps")
+        return p["max_messages_rps"]
+
     def asynchronous(self, node, edge):
         self.result.trace.append(f"{edge.source} {edge.kind} {node.name}")
         if "rate_rps" not in self.request:
@@ -56,8 +66,7 @@ class PlatformModel:
                 self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{node.name} requires worker_vcpus and submits_to job_cpu_ms")
             self.add(node, "batch_cpu", self.request["rate_rps"] * edge.properties["job_cpu_ms"])
         else:
-            if "max_messages_rps" not in p:
-                self.fail("SCALING_MODEL_INCOMPLETE", detail=f"{node.name} requires max_messages_rps")
+            self.message_limit(node)
             self.add(node, "publish" if edge.kind == "publishes_to" else "consume", self.request["rate_rps"])
 
     def evaluate(self):
@@ -71,17 +80,18 @@ class PlatformModel:
             elif kind == "batch_cpu":
                 limit = p["workers"] * p["worker_vcpus"] * 1000 * p.get("cpu_utilization", 0.7)
             else:
-                messaging.add(name)
-                limit = p["max_messages_rps"]
+                if node.kind != "topic":
+                    messaging.add(name)
+                limit = self.message_limit(node)
             record = {"resource": name, "kind": kind, "demand": demand, "capacity": limit, "overloaded": demand > limit}
             self.result.budgets.append(record)
             self.result.trace.append(f"{kind} {name}: demand={demand:g}; capacity={limit:g}")
             if demand > limit:
                 failures.append((name, f"{kind} demand {demand:g} exceeds declared capacity {limit:g}"))
-        for name in messaging:
+        for name in sorted(messaging):
             p = self.arch.nodes[name].properties
             arrivals = self.loads.get((name, "publish"), 0)
-            consumed = min(p["max_messages_rps"], self.loads.get((name, "consume"), 0) + p.get("consumer_rate_rps", 0))
+            consumed = min(self.message_limit(self.arch.nodes[name]), self.loads.get((name, "consume"), 0) + p.get("consumer_rate_rps", 0))
             backlog = max(0, arrivals - consumed) * self.request.get("window_seconds", 1)
             self.result.budgets.append({"resource": name, "kind": "backlog", "messages": backlog})
             self.result.trace.append(f"Backlog {name}: max(0, {arrivals:g} - {consumed:g}) × {self.request.get('window_seconds', 1):g}s = {backlog:g} messages")

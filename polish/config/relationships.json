@@ -100,7 +100,8 @@
       ],
       "targets": [
         "queue",
-        "stream"
+        "stream",
+        "topic"
       ]
     },
     "consumes_from": {
@@ -128,6 +129,14 @@
       ],
       "targets": [
         "artifact_store"
+      ]
+    },
+    "delivers_to": {
+      "sources": [
+        "topic"
+      ],
+      "targets": [
+        "queue"
       ]
     }
   },

@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.9: a Python compiler and
+This repository contains version 0.10: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -1181,3 +1181,102 @@ reviewing pool size, workers, and connection distribution. The radio example ins
 expects the overloaded scenario to fail, so all four demonstration scenarios pass.
 Fastly edge-cache traffic reduction and an automatic before/after cache migration
 model are not included yet.
+
+## Additional AWS and GCP products
+
+```sh
+polish simulate examples/multicloud.polishd
+```
+
+The ten scenarios cover successful requests and overloaded resources. New profiles
+live in `polish/config/vendors/aws/events.json` and `polish/config/vendors/gcp/`.
+
+| Provider / product | Component | Validation and simulation |
+|---|---|---|
+| `aws / sns` | `topic` | Standard/FIFO topic selection, SNS-to-SQS relationships, topic throughput and destination budgets |
+| `aws / kinesis` | `stream` | Provisioned/on-demand contracts, declared shard capacity, consumption and backlog budgets |
+| `gcp / pubsub_topic` | `topic` | Topic publishing, fan-out to subscriptions, declared publish capacity |
+| `gcp / pubsub_subscription` | `queue` | Exactly one source topic, pull subscription, independent consumption and backlog |
+| `gcp / memorystore_redis` | `cache` | Managed placement, dataset size, measured operation throughput, client connection budgets, miss/error policies |
+| `gcp / cloudsql_postgres` | `database_cluster` | Relational storage, TLS, asynchronous read-replica consistency, measured aggregate operation throughput, database connection budgets |
+
+### Topic delivery
+
+```polish
+topic Updates {
+  provider = gcp product = pubsub_topic max_messages_rps = 100
+  delivers_to Indexing
+  delivers_to Analytics
+}
+queue Indexing {
+  provider = gcp product = pubsub_subscription delivery = pull
+  max_messages_rps = 80 consumer_rate_rps = 10 max_backlog = 50
+}
+queue Analytics {
+  provider = gcp product = pubsub_subscription
+  max_messages_rps = 100 consumer_rate_rps = 100 max_backlog = 200
+}
+```
+
+Services use `publishes_to Updates` and `consumes_from Indexing`. Each publication
+delivers one message to every declared subscription. At 20 publications/s over six
+seconds, Indexing accumulates `max(0, 20 - 10) × 6 = 60` messages, exceeding its
+50-message budget, while Analytics has no growth. Backlog starts at zero for each
+scenario. `consumer_rate_rps` is background consumption; explicit `consumes_from`
+traffic adds to it. Declared capacity bounds publishing and consumption separately.
+
+SNS uses the same `topic` syntax with `provider = aws product = sns` and
+`topic_type = standard` or `fifo`; its `delivers_to` targets must be AWS SQS queues.
+Standard SNS topics cannot target FIFO SQS queues. Pub/Sub subscriptions require
+exactly one incoming Pub/Sub `delivers_to` relationship; publishing directly to a
+subscription is rejected. Topics have publish budgets, not consumer backlogs.
+
+These are aggregate messaging scenarios: a destination overload makes the scenario
+fail, not a claim that the real asynchronous publisher receives a synchronous error.
+Delivery latency, retries, IAM, filtering, message ordering/deduplication, and
+exactly-once guarantees are not simulated. Pub/Sub push/export subscriptions and
+SNS HTTP/email endpoints are outside this iteration.
+
+### Kinesis capacity
+
+```polish
+stream Events {
+  provider = aws product = kinesis capacity_mode = provisioned
+  shards = 2 messages_per_shard_rps = 50
+  consumer_rate_rps = 100 max_backlog = 200
+}
+```
+
+Provisioned capacity is `shards × messages_per_shard_rps`: this example supports a
+declared 100 messages/s. The per-shard rate is a measured assumption supplied by the
+user, not a built-in AWS quota. On-demand mode omits both shard settings and uses an
+explicit `max_messages_rps` bound. `on_demand` abstracts AWS on-demand variants;
+autoscaling history, warm capacity, hot keys, byte limits, and enhanced fan-out are
+not modeled. Read and write rates use the same declared bound independently.
+Kinesis connections use HTTPS, while MSK retains its TLS transport model.
+
+### GCP cache and database budgets
+
+Memorystore reuses the Redis dataset, operation-rate, and connection-pool models.
+Use `nodes` as the number of modeled client-facing cache nodes, not a claim that
+standbys add serving capacity. High availability, tier-specific placement, Redis
+Cluster slot routing, failover, and replica endpoints are not modeled.
+
+Cloud SQL uses a `database` hosted on `database_cluster` with
+`provider = gcp product = cloudsql_postgres`. Declare `max_ops_rps` on the cluster
+as measured aggregate capacity. Replica count does not automatically multiply that
+budget. Read replicas must be asynchronous and cannot satisfy strong-consistency
+replica reads. Optional service `connection_pool_size` and database
+`max_connections`/`reserved_connections` are evaluated as with the other connection
+budgets. This is an operation-rate model, not a Cloud SQL machine-type or HA model;
+`instance_type` and `cpu_utilization` are rejected for this profile.
+
+The example uses explicitly sized self-hosted application compute; it does not imply
+that GCP Compute Engine machine types or Cloud Run execution are supported yet.
+All new rate limits are declared modeling inputs, not provider performance promises.
+
+Product references: [SNS FIFO](https://docs.aws.amazon.com/sns/latest/dg/sns-fifo-topics.html),
+[Kinesis capacity modes](https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html),
+[Pub/Sub subscriptions](https://docs.cloud.google.com/pubsub/docs/subscription-overview),
+[Memorystore for Redis](https://docs.cloud.google.com/memorystore/docs/redis/memorystore-for-redis-overview),
+and [Cloud SQL replication](https://docs.cloud.google.com/sql/docs/postgres/replication).

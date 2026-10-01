@@ -1,0 +1,38 @@
+{
+  "products": {
+    "cloudsql_postgres": {
+      "component": "database_cluster",
+      "defaults": {
+        "tls": true,
+        "engine": "postgres",
+        "storage": "persistent"
+      },
+      "required": [],
+      "properties": [
+        "tls",
+        "max_ops_rps",
+        "engine",
+        "storage"
+      ],
+      "property_types": {
+        "max_ops_rps": "positive"
+      },
+      "capacity_model": "operations",
+      "database_kinds": [
+        "relational"
+      ],
+      "protocols": [
+        "tcp",
+        "tls"
+      ],
+      "forbidden": [
+        "instance_type",
+        "cpu_utilization"
+      ]
+    }
+  },
+  "sources": [
+    "https://docs.cloud.google.com/sql/docs/postgres/replication"
+  ],
+  "verified_on": "2026-10-01"
+}

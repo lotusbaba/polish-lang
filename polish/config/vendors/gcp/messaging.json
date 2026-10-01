@@ -1,0 +1,53 @@
+{
+  "products": {
+    "pubsub_topic": {
+      "component": "topic",
+      "defaults": {
+        "tls": true
+      },
+      "required": [],
+      "properties": [
+        "tls",
+        "max_messages_rps"
+      ],
+      "property_types": {
+        "max_messages_rps": "positive"
+      },
+      "protocols": [
+        "https"
+      ]
+    },
+    "pubsub_subscription": {
+      "component": "queue",
+      "defaults": {
+        "tls": true,
+        "delivery": "pull"
+      },
+      "required": [],
+      "properties": [
+        "tls",
+        "max_messages_rps",
+        "consumer_rate_rps",
+        "max_backlog",
+        "delivery"
+      ],
+      "property_types": {
+        "max_messages_rps": "positive",
+        "consumer_rate_rps": "nonnegative",
+        "max_backlog": "nonnegative_integer"
+      },
+      "protocols": [
+        "https"
+      ],
+      "enums": {
+        "delivery": [
+          "pull"
+        ]
+      }
+    }
+  },
+  "sources": [
+    "https://docs.cloud.google.com/pubsub/docs/subscription-overview"
+  ],
+  "verified_on": "2026-10-01"
+}

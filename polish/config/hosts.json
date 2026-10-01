@@ -49,6 +49,13 @@
         "product"
       ],
       "parents": []
+    },
+    "topic": {
+      "properties": [
+        "provider",
+        "product"
+      ],
+      "parents": []
     }
   },
   "hosting": {

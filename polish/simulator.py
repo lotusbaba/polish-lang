@@ -234,6 +234,7 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
                     dynamo_capacity.charge(database, edge, db_host)
                 elif product_profile(arch, db_host).get("capacity_model") == "operations":
                     platforms.database(db_host)
+                    budgets.connection(edge, database, role)
                 else:
                     capacity_model.charge(database, edge.properties.get("cpu_ms"), role)
                     budgets.connection(edge, database, role)
@@ -242,9 +243,17 @@ def simulate(arch: Architecture, scenario: Scenario) -> SimulationResult:
                         result.accessed.append(name)
                 result.trace.append(f"{node.name} {edge.kind} {target.name}; partitions={p.get('partitions', 'unspecified')}")
             elif edge.kind in {"publishes_to", "consumes_from", "submits_to"}:
-                connection(target, "tls" if target.kind == "stream" else "https")
+                connection(target, product_profile(arch, target).get("request_protocol", "tls" if target.kind == "stream" else "https"))
                 mark(target)
                 platforms.asynchronous(target, edge)
+                if edge.kind == "publishes_to" and target.kind == "topic":
+                    from .model import Edge
+                    for delivery in arch.outgoing(target.name, "delivers_to"):
+                        subscription = arch.nodes[delivery.target]
+                        connection(subscription, "https")
+                        mark(subscription)
+                        result.trace.append(f"{target.name} delivers to {subscription.name}")
+                        platforms.asynchronous(subscription, Edge(target.name, "publishes_to", subscription.name, delivery.line))
 
     def endpoint(candidates):
         matches = [n for n in candidates if n.properties.get("method") == request.get("method", "GET")

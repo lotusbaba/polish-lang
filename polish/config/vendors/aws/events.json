@@ -1,0 +1,68 @@
+{
+  "products": {
+    "sns": {
+      "component": "topic",
+      "defaults": {
+        "tls": true,
+        "topic_type": "standard"
+      },
+      "required": [],
+      "properties": [
+        "tls",
+        "max_messages_rps",
+        "topic_type"
+      ],
+      "property_types": {
+        "max_messages_rps": "positive"
+      },
+      "protocols": [
+        "https"
+      ],
+      "enums": {
+        "topic_type": [
+          "standard",
+          "fifo"
+        ]
+      }
+    },
+    "kinesis": {
+      "component": "stream",
+      "defaults": {
+        "tls": true,
+        "capacity_mode": "provisioned"
+      },
+      "required": [],
+      "properties": [
+        "tls",
+        "max_messages_rps",
+        "consumer_rate_rps",
+        "max_backlog",
+        "shards",
+        "messages_per_shard_rps",
+        "capacity_mode"
+      ],
+      "property_types": {
+        "max_messages_rps": "positive",
+        "consumer_rate_rps": "nonnegative",
+        "max_backlog": "nonnegative_integer",
+        "shards": "positive_integer",
+        "messages_per_shard_rps": "positive"
+      },
+      "protocols": [
+        "https"
+      ],
+      "request_protocol": "https",
+      "enums": {
+        "capacity_mode": [
+          "provisioned",
+          "on_demand"
+        ]
+      }
+    }
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/sns/latest/dg/sns-fifo-topics.html",
+    "https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html"
+  ],
+  "verified_on": "2026-10-01"
+}

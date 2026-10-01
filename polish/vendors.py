@@ -36,6 +36,8 @@ def load_vendors(root, manifest):
                 types = product.get("property_types", {})
                 if not isinstance(types, dict) or any(value not in {"positive", "nonnegative", "positive_integer", "nonnegative_integer"} for value in types.values()):
                     raise ValueError(f"Invalid property_types for {name}")
+                if "request_protocol" in product and product["request_protocol"] not in {"https", "tls"}:
+                    raise ValueError(f"Invalid request_protocol for {name}")
                 enums = product.get("enums", {})
                 if not isinstance(enums, dict) or any(not isinstance(values, list) or not all(isinstance(v, str) for v in values) for values in enums.values()):
                     raise ValueError(f"Invalid enums for {name}")
@@ -58,7 +60,7 @@ def prepare_products(arch, error, config):
         p = node.properties
         name = p.get("product")
         if name is None:
-            if node.kind in {"queue", "stream", "batch_cluster"}:
+            if node.kind in {"queue", "stream", "batch_cluster", "topic"}:
                 error("E_VENDOR", line=node.line, detail=f"{node.kind} requires a product profile")
             profile = arch.aws["instances"].get(p.get("instance_type"))
             if profile and profile["family"] != "ec2":
@@ -121,6 +123,9 @@ def prepare_products(arch, error, config):
                     error("E_VENDOR", line=node.line, detail=f"{key} conflicts with {mode} capacity")
             if mode == "provisioned" and not {"read_capacity_units", "write_capacity_units"} <= p.keys():
                 error("E_VENDOR", line=node.line, detail="Provisioned DynamoDB requires read_capacity_units and write_capacity_units")
+
+    from .cloud_products import validate_cloud_products
+    validate_cloud_products(arch, error)
 
     for node in arch.nodes.values():
         images = arch.outgoing(node.name, "image_from")

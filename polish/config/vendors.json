@@ -9,7 +9,8 @@
       "databases.json",
       "apigateway.json",
       "messaging.json",
-      "delivery.json"
+      "delivery.json",
+      "events.json"
     ],
     "self_hosted": [
       "caches.json",
@@ -24,6 +25,11 @@
     ],
     "cloudflare": [
       "edge.json"
+    ],
+    "gcp": [
+      "messaging.json",
+      "memorystore.json",
+      "cloudsql.json"
     ]
   }
 }
