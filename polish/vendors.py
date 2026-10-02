@@ -67,6 +67,16 @@ def load_vendors(root, manifest, schema):
                         raise ValueError(f"Unknown vendor numeric constraint {constraint}")
                     if not valid:
                         raise ValueError(f"Invalid {field} for {name}")
+                for field in ('database_defaults', 'database_enums', 'survival_goals'):
+                    if field in product and not isinstance(product[field], dict):
+                        raise ValueError(f'Invalid {field} for {name}')
+                for key, values in product.get('database_enums', {}).items():
+                    if not isinstance(values, list) or not values or not all(isinstance(v, str) for v in values):
+                        raise ValueError(f'Invalid database enum {key} for {name}')
+                for goal, limits in product.get('survival_goals', {}).items():
+                    if (not isinstance(limits, dict) or set(limits) != {'min_regions','min_replicas'}
+                            or any(type(v) is not int or v < 1 for v in limits.values())):
+                        raise ValueError(f'Invalid survival goal {goal} for {name}')
                 catalog["products"][name] = product
         catalogs[vendor] = catalog
     return catalogs

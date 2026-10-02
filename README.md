@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.13: a Python compiler and
+This repository contains version 0.14: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -1502,3 +1502,20 @@ end-to-end latency, audio timing, byte bandwidth, proxy idle timeout, retries,
 backpressure, failover, or graceful connection draining. Redis approximate trimming
 is represented by an explicit conservative retention bound. A connection-budget
 failure identifies a violated assumption, not the time of a predicted outage.
+
+## CockroachDB as a separate vendor
+
+Use `provider = cockroachdb` with `product = cockroachdb` (self-managed) or
+`cockroachdb_cloud` (managed). The dedicated JSON catalog models relational SQL/TLS
+connections, declared operations and connection budgets, synchronous quorum writes,
+backup policy, isolation declarations, and minimum region/replica survival constraints.
+The existing `self_hosted / cockroachdb` profile remains compatible.
+
+```sh
+.venv/bin/python -m polish simulate examples/cockroachdb.polishd
+```
+
+See [the CockroachDB configuration guide](docs/cockroachdb.md) for settings, custom
+configuration, five executable scenarios, upstream references, and limitations.
+Topology counts do not prove outage resilience; transaction execution, follower reads,
+CDC, and query/index behavior are not simulated.

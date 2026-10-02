@@ -1,0 +1,192 @@
+{
+  "products": {
+    "cockroachdb": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "cockroachdb",
+        "storage": "persistent",
+        "tls": true
+      },
+      "required": [
+        "nodes"
+      ],
+      "properties": [
+        "nodes",
+        "max_ops_rps"
+      ],
+      "property_types": {
+        "nodes": "positive_integer",
+        "max_ops_rps": "positive"
+      },
+      "database_kinds": [
+        "relational"
+      ],
+      "protocols": [
+        "tcp",
+        "tls"
+      ],
+      "capacity_model": "operations",
+      "forbidden": [
+        "instance_type",
+        "cpu_utilization",
+        "replicas",
+        "partitions"
+      ],
+      "database_forbidden": [
+        "read_replicas"
+      ],
+      "database_defaults": {
+        "replication": "synchronous",
+        "replication_factor": 3,
+        "write_ack": "quorum",
+        "durability": "replicated",
+        "isolation_level": "serializable",
+        "regions": 1,
+        "survival_goal": "none"
+      },
+      "database_enums": {
+        "replication": [
+          "synchronous"
+        ],
+        "write_ack": [
+          "quorum"
+        ],
+        "durability": [
+          "replicated"
+        ],
+        "isolation_level": [
+          "serializable",
+          "read_committed"
+        ],
+        "survival_goal": [
+          "none",
+          "zone",
+          "region"
+        ]
+      },
+      "survival_goals": {
+        "none": {
+          "min_regions": 1,
+          "min_replicas": 1
+        },
+        "zone": {
+          "min_regions": 1,
+          "min_replicas": 3
+        },
+        "region": {
+          "min_regions": 3,
+          "min_replicas": 5
+        }
+      },
+      "distributed_sql": true
+    },
+    "cockroachdb_cloud": {
+      "component": "database_cluster",
+      "defaults": {
+        "engine": "cockroachdb",
+        "storage": "persistent",
+        "tls": true
+      },
+      "required": [],
+      "properties": [
+        "max_ops_rps"
+      ],
+      "property_types": {
+        "max_ops_rps": "positive"
+      },
+      "database_kinds": [
+        "relational"
+      ],
+      "protocols": [
+        "tls"
+      ],
+      "capacity_model": "operations",
+      "forbidden": [
+        "instance_type",
+        "cpu_utilization",
+        "replicas",
+        "partitions",
+        "nodes"
+      ],
+      "database_forbidden": [
+        "read_replicas"
+      ],
+      "database_defaults": {
+        "replication": "synchronous",
+        "replication_factor": 3,
+        "write_ack": "quorum",
+        "durability": "replicated",
+        "isolation_level": "serializable",
+        "regions": 1,
+        "survival_goal": "none"
+      },
+      "database_enums": {
+        "replication": [
+          "synchronous"
+        ],
+        "write_ack": [
+          "quorum"
+        ],
+        "durability": [
+          "replicated"
+        ],
+        "isolation_level": [
+          "serializable",
+          "read_committed"
+        ],
+        "survival_goal": [
+          "none",
+          "zone",
+          "region"
+        ]
+      },
+      "survival_goals": {
+        "none": {
+          "min_regions": 1,
+          "min_replicas": 1
+        },
+        "zone": {
+          "min_regions": 1,
+          "min_replicas": 3
+        },
+        "region": {
+          "min_regions": 3,
+          "min_replicas": 5
+        }
+      },
+      "managed": true,
+      "distributed_sql": true
+    }
+  },
+  "sources": [
+    "https://www.cockroachlabs.com/docs/stable/developer-basics",
+    "https://www.cockroachlabs.com/docs/stable/multiregion-overview",
+    "https://www.cockroachlabs.com/docs/stable/architecture/replication-layer",
+    "https://www.cockroachlabs.com/docs/stable/take-and-restore-backups",
+    "https://www.cockroachlabs.com/blog/build-a-highly-available-multi-region-database/"
+  ],
+  "verified_on": "2026-10-01",
+  "capabilities": {
+    "modeled": [
+      "PostgreSQL wire transport over TCP/TLS",
+      "relational tables",
+      "declared aggregate operations/second",
+      "connection budgets",
+      "synchronous quorum write declarations",
+      "backup retention policy",
+      "minimum survival topology checks"
+    ],
+    "declaration_only": [
+      "serializable and read_committed isolation"
+    ],
+    "not_simulated": [
+      "SQL execution and transaction anomalies/retries",
+      "replica placement, failover, and region outage recovery",
+      "global/regional-by-table/regional-by-row locality",
+      "changefeeds and CDC delivery",
+      "strong/stale follower reads and AS OF SYSTEM TIME",
+      "online schema changes, vector indexes, query plans",
+      "backup execution, point-in-time restore, costs and licensing"
+    ]
+  }
+}

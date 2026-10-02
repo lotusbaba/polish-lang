@@ -16,7 +16,8 @@
       "managed",
       "host_required",
       "path_routing",
-      "terminate_encrypted"
+      "terminate_encrypted",
+      "distributed_sql"
     ],
     "numeric_fields": {
       "read_chunk_bytes": "positive_integer",

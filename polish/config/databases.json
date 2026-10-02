@@ -14,7 +14,10 @@
         "tls",
         "write_ack",
         "max_connections",
-        "reserved_connections"
+        "reserved_connections",
+        "regions",
+        "survival_goal",
+        "isolation_level"
       ],
       "parents": []
     },

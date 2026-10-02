@@ -18,10 +18,34 @@ def validate_cloud_products(arch, error):
             incoming = arch.incoming(node.name, 'delivers_to')
             if len(incoming) != 1 or arch.nodes[incoming[0].source].properties.get('product') != 'pubsub_topic':
                 invalid(node, describe(arch, 'CLOUD_PRODUCTS_A_PUB_SUB_SUBSCRIPTION_REQUIRES_EXACTLY_ONE', node))
+        if provider == 'cockroachdb' and product == 'cockroachdb_cloud' and p.get('tls') is not True:
+            invalid(node, describe(arch, 'COCKROACH_CLOUD_TLS', node))
         if node.kind == 'database':
             hosts = arch.outgoing(node.name, 'hosted_on')
             if len(hosts) == 1:
                 host = arch.nodes[hosts[0].target]
+                profile = product_profile(arch, host)
+                if host.properties.get('provider') == 'cockroachdb':
+                    for key, value in profile.get('database_defaults', {}).items():
+                        p.setdefault(key, value)
+                    for key, values in profile.get('database_enums', {}).items():
+                        if key in p and p[key] not in values:
+                            invalid(node, describe(arch, 'COCKROACH_DATABASE_SETTING', node, key=key))
+                    if type(p.get('regions')) is not int or p['regions'] < 1:
+                        invalid(node, describe(arch, 'COCKROACH_REGIONS', node))
+                    limits = profile.get('survival_goals', {}).get(p.get('survival_goal'), {})
+                    if type(p.get('regions')) is int and p['regions'] < limits.get('min_regions', 1):
+                        invalid(node, describe(arch, 'COCKROACH_SURVIVAL_REGIONS', node, minimum=limits['min_regions']))
+                    count = p.get('replication_factor')
+                    if type(count) is int:
+                        if count < limits.get('min_replicas', 1):
+                            invalid(node, describe(arch, 'COCKROACH_SURVIVAL_REPLICAS', node, minimum=limits['min_replicas']))
+                        if type(host.properties.get('nodes')) is int and count > host.properties['nodes']:
+                            invalid(node, describe(arch, 'COCKROACH_NODES', node))
+                    if host.properties.get('product') == 'cockroachdb_cloud' and p.get('tls') is False:
+                        invalid(node, describe(arch, 'COCKROACH_CLOUD_TLS', node))
+                elif any(key in p for key in ('regions', 'survival_goal', 'isolation_level')):
+                    invalid(node, describe(arch, 'COCKROACH_ONLY_SETTINGS', node))
                 if host.properties.get('provider') == 'gcp' and host.properties.get('product') == 'cloudsql_postgres':
                     if number(p.get('read_replicas', 0)) and p.get('read_replicas', 0) > 0:
                         p.setdefault('replication', 'asynchronous')
@@ -30,6 +54,14 @@ def validate_cloud_products(arch, error):
     for edge in arch.edges:
         src, dst = (arch.nodes[edge.source], arch.nodes[edge.target])
         sp, dp = (src.properties, dst.properties)
+        if edge.kind in {'reads', 'writes'}:
+            database = dst if dst.kind == 'database' else arch.nodes.get(dst.parent)
+            hosts = arch.outgoing(database.name, 'hosted_on') if database else []
+            if hosts and arch.nodes[hosts[0].target].properties.get('provider') == 'cockroachdb':
+                if edge.kind == 'reads':
+                    edge.properties.setdefault('consistency', 'strong')
+                if 'read_from' in edge.properties or 'cpu_ms' in edge.properties:
+                    invalid(dst, describe(arch, 'COCKROACH_EDGE_OPTIONS', dst))
         if edge.kind == 'delivers_to':
             pair = (sp.get('provider'), sp.get('product'), dp.get('provider'), dp.get('product'))
             if pair not in {('aws', 'sns', 'aws', 'sqs'), ('gcp', 'pubsub_topic', 'gcp', 'pubsub_subscription')}:

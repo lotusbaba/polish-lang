@@ -1,0 +1,52 @@
+// Synthetic budgets, not CockroachDB performance measurements.
+architecture CockroachStore {
+  compute_pool Apps { provider = self_hosted vcpus = 2 memory_gib = 4 instances = 2 }
+  service API {
+    hosted_on Apps
+    connection_pool_size = 20
+    operation get { cpu_ms = 1 method = GET path = "/items" reads Store.Items { protocol = tls consistency = strong } }
+    operation put { cpu_ms = 1 method = POST path = "/items" writes Store.Items { protocol = tls durability = replicated } }
+    operation cloud { cpu_ms = 1 method = GET path = "/cloud" reads Managed.Items { protocol = tls consistency = strong } }
+  }
+  database_cluster Cluster {
+    provider = cockroachdb product = cockroachdb
+    nodes = 5 max_ops_rps = 100
+  }
+  database Store {
+    kind = relational hosted_on Cluster
+    regions = 3 survival_goal = region replication_factor = 5
+    isolation_level = serializable
+    max_connections = 100 reserved_connections = 10
+    backups = true backup_retention_days = 7
+    table Items { id: uuid primary_key name: string }
+  }
+  database_cluster Cloud {
+    provider = cockroachdb product = cockroachdb_cloud max_ops_rps = 80
+  }
+  database Managed {
+    kind = relational hosted_on Cloud
+    isolation_level = read_committed
+    max_connections = 100 reserved_connections = 10
+    table Items { id: uuid primary_key }
+  }
+}
+scenario "Strong SQL read within declared capacity" {
+  request { entry = API method = GET path = "/items" protocol = http rate_rps = 50 }
+  expect { outcome = success accesses Store.Items reaches Cluster }
+}
+scenario "Replicated write uses majority acknowledgement" {
+  request { entry = API method = POST path = "/items" protocol = http rate_rps = 50 }
+  expect { outcome = success accesses Store.Items }
+}
+scenario "Self-managed operations budget exceeded" {
+  request { entry = API method = GET path = "/items" protocol = http rate_rps = 101 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}
+scenario "Cloud SQL read within declared capacity" {
+  request { entry = API method = GET path = "/cloud" protocol = http rate_rps = 80 }
+  expect { outcome = success accesses Managed.Items reaches Cloud }
+}
+scenario "Cloud operations budget exceeded" {
+  request { entry = API method = GET path = "/cloud" protocol = http rate_rps = 81 }
+  expect { outcome = error error = PLATFORM_CAPACITY_EXCEEDED }
+}

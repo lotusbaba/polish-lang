@@ -530,7 +530,7 @@
       "parameters": []
     },
     "VENDORS_MANAGED_DYNAMODB_DOES_NOT_EXPOSE": {
-      "message": "Managed DynamoDB does not expose {key}",
+      "message": "This database product does not expose {key}.",
       "parameters": [
         "key"
       ]
@@ -720,6 +720,44 @@
         "field",
         "input_name"
       ]
+    },
+    "COCKROACH_CLOUD_TLS": {
+      "message": "CockroachDB Cloud requires TLS on both the cluster and logical database.",
+      "parameters": []
+    },
+    "COCKROACH_DATABASE_SETTING": {
+      "message": "Unsupported CockroachDB database setting: {key}.",
+      "parameters": [
+        "key"
+      ]
+    },
+    "COCKROACH_REGIONS": {
+      "message": "CockroachDB regions must be a positive integer.",
+      "parameters": []
+    },
+    "COCKROACH_SURVIVAL_REGIONS": {
+      "message": "This survival goal requires at least {minimum} declared database regions.",
+      "parameters": [
+        "minimum"
+      ]
+    },
+    "COCKROACH_SURVIVAL_REPLICAS": {
+      "message": "This survival goal requires at least {minimum} declared voting replicas per range.",
+      "parameters": [
+        "minimum"
+      ]
+    },
+    "COCKROACH_NODES": {
+      "message": "CockroachDB voting replicas per range cannot exceed the declared self-managed node count.",
+      "parameters": []
+    },
+    "COCKROACH_ONLY_SETTINGS": {
+      "message": "regions, survival_goal, and isolation_level currently require provider = cockroachdb.",
+      "parameters": []
+    },
+    "COCKROACH_EDGE_OPTIONS": {
+      "message": "CockroachDB uses a distributed SQL endpoint and an aggregate operations budget; read_from and cpu_ms are unsupported. Follower-read semantics are not simulated.",
+      "parameters": []
     }
   }
 }

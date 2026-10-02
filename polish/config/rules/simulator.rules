@@ -190,7 +190,7 @@ def simulate(arch, scenario):
                         fail('NO_READ_REPLICA', database_name=database.name)
                     if read_from == 'replica' and consistency == 'strong' and (p.get('replication') != 'synchronous'):
                         fail('CONSISTENCY_UNSUPPORTED', database_name=database.name)
-                    result.trace.append(f"Read {target.name} from {('managed endpoint' if dynamo else read_from)}, consistency={consistency}")
+                    result.trace.append(f"Read {target.name} from {('managed endpoint' if dynamo else 'distributed SQL endpoint' if product_profile(arch, db_host).get('distributed_sql') else read_from)}, consistency={consistency}")
                 else:
                     durability = p.get('durability', 'memory')
                     required = edge.properties.get('durability', 'memory')
