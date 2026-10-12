@@ -9,6 +9,7 @@
     "storage": "storage.rules",
     "vendors": "vendors.rules",
     "simulator": "simulator.rules",
-    "compiler_contracts": "compiler_contracts.rules"
+    "compiler_contracts": "compiler_contracts.rules",
+    "generation": "generation.rules"
   }
 }

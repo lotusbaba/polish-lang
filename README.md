@@ -12,6 +12,68 @@ This repository contains version 0.14: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
+## Local architecture editor
+
+Open a specification as an interactive Excalidraw diagram:
+
+```sh
+polish editor examples/cockroachdb.polishd
+```
+
+Polish starts a localhost server and opens your browser. Components become labeled
+shapes, relationships become arrows, and containment uses dashed arrows. The source
+pane stays beside the canvas:
+
+- **Check & draw** validates the `.polishd` source and refreshes its diagram.
+- **Simulate** runs the file's scenarios and shows their results and traces.
+- **Save file** writes to the file supplied on the command line, rejecting saves
+  if another editor has changed it on disk.
+- **Fit canvas** and **Auto-arrange** help navigate larger architectures.
+
+Use Excalidraw's drawing tools, annotations, undo/redo, library, and menu to save
+`.excalidraw` scenes or export PNG/SVG images. Diagram layout and annotations are
+saved in this browser's local storage (IndexedDB). Source changes regenerate the
+architecture while retaining component positions and annotations. Semantic canvas
+edits also update the `.polishd` draft automatically when you finish editing:
+
+- Double-click a component label to change its name (first line) or kind (second
+  line). Renames update references, including scenario targets and child names.
+- Draw a rectangle, ellipse, or diamond and label it with a Polish declaration,
+  for example `role Observer` or `service Search { hosted_on Apps }`.
+  Use `operation API.ping { method = GET path = "/ping" }` to add a child to an
+  existing parent. The component kind must be defined in the loaded config.
+- Draw an arrow bound to two component shapes and label it with a relationship,
+  such as `invokes`, `reads`, or `hosted_on`. Reconnect existing arrows to change
+  their endpoints. Use `routes_to /api/*` for a path route.
+- Delete a component or relationship to remove it from the draft. Deleting a
+  container removes its children, but does not silently delete scenarios.
+- Click **Save file** to write the updated draft to the attached `.polishd` file.
+  Canvas synchronization does not automatically overwrite files on disk.
+
+Every canvas change passes through the Polish compiler. Invalid changes show
+errors and keep the last accepted source; fix the canvas or use **Check & draw**
+to restore it from that source. If the source was edited independently, apply it
+with **Check & draw** before making further canvas changes. Change containment,
+existing properties, fields, and requirements in the source pane. Moving shapes,
+changing colors, and adding ordinary annotation text only affect the diagram.
+
+Run `polish editor` for a scratch workspace and download its `.polishd` file.
+**Open…** imports a file into the current draft; the attached save destination stays
+as the command-line file. Restart the editor with another path to change it.
+
+```sh
+polish editor examples/cockroachdb.polishd --port 9000 --no-browser
+```
+
+Open the complete URL printed by the command. Stop the server with Ctrl+C.
+The editor binds to `127.0.0.1`; its bundled assets and fonts work offline, and
+running it requires neither Node.js nor an Excalidraw account. This is a local,
+single-user editor. It does not include real-time collaboration.
+
+Frontend contributors can rebuild the bundled assets with `cd editor-ui`,
+`npm ci`, then `npm run build`. Run `npx playwright install chromium` and
+`npm test` in that directory for the browser integration test.
+
 ## Problems Polish helps solve
 
 ### Reuse an architecture when the use case changes
@@ -71,6 +133,7 @@ it does not establish production performance or reliability.
 ## Start here
 
 - New to Polish? Follow [Run it](#run-it) for a deterministic simulation; no API key is needed.
+- Modeling an existing repository? Follow [Create a specification from a repository](#create-a-specification-from-a-repository) for a copyable Codex prompt.
 - Comparing architecture changes? See [the recommendation walkthrough](examples/recommendations/README.md) for an offline comparison followed by an optional Jev choice.
 - Inspect a completed example: [decision-model report](examples/recommendations/results/report.html), with linked JSON evidence. Download/open the HTML locally; GitHub's source view does not render it as a report.
 - Troubleshooting your first run? See [the new-user guide](docs/getting-started.md), including virtual environments, credentials, exit codes, and reading reports.
@@ -103,6 +166,47 @@ Commands return exit code `0` when checks or scenario expectations pass, and `1`
 for compilation errors, failed expectations, unreadable input, or no matching
 scenarios. An expected denial or expected TLS error is a passing scenario.
 `--json` emits a single JSON object with `ok`, `diagnostics`, and `results`.
+
+## Create a specification from a repository
+
+Open the application repository in Codex and ask it to inspect the implementation
+and deployment files, then write a `.polishd` specification. Polish does not currently
+import repositories automatically: Codex creates the specification, and Polish
+validates and simulates what it describes.
+
+Copy this prompt into Codex:
+
+```text
+Inspect this repository and create architecture/system.polishd describing its
+current architecture.
+
+Identify services, frontend pages, databases, caches, queues, infrastructure,
+and their relationships from code, Docker files, Terraform, Kubernetes manifests,
+and deployment configuration.
+
+Use Polish's supported syntax and product definitions. Consult its README,
+examples, and configuration catalog. Record source-file references in comments.
+Distinguish confirmed facts from assumptions, and list missing capacity
+measurements separately. Do not invent throughput, connection limits, or workload
+costs, and never copy credentials into the specification.
+
+Add scenarios covering the main request paths and access restrictions. Run
+polish check and polish simulate, fix specification errors, and explain any
+unresolved modeling gaps. Don't modify application code or deploy anything.
+```
+
+If Polish is not installed in the application's environment, install it with
+`python -m pip install polish-lang`. Then validate the generated specification:
+
+```sh
+polish check architecture/system.polishd
+polish simulate architecture/system.polishd
+```
+
+Start with the actual structure and request paths, then add measured workload and
+capacity inputs for scaling analysis. Review the specification against the cited
+source files: a passing simulation validates the model's declared behavior, not
+whether the model faithfully captures every aspect of the running application.
 
 ## Example
 
@@ -1243,6 +1347,58 @@ failure, and unobserved affected components are reported as needing information.
 Exit code 0 means all selected requirements pass on the proposed design, not that
 all possible impacts have been tested. Hard constraints currently come from the
 compiler rules and scenario expectations.
+
+### Automatic candidate generation
+
+Generate reviewable architecture alternatives from simulation failures:
+
+```sh
+python -m polish plan examples/recommendations/connection-pools/before.polishd \
+  --proposed examples/recommendations/connection-pools/proposed.polishd \
+  --generate-candidates /tmp/polish-generated-pools \
+  --objective 'Preserve application instances and reduce database connection pressure.' \
+  --json
+```
+
+Use a **new output directory**. Polish writes candidate `.polishd` files,
+`candidates.json`, and `generation.json` with edits, reasons, validation evidence,
+skipped edits, and whether the search hit a limit. The original files are untouched.
+A failing original proposal still exits 1 even when generated remedies pass.
+
+The bundled recipes increase compute-pool instances from CPU requirements, reduce
+database connection pools proportionally to the observed budget excess, and size
+broadcast retention to the declared lag. They offer the minimum calculated remedy
+and an alternative with additional headroom. Failed candidates can produce further
+edits: scaling compute may require a subsequent connection-pool reduction. Every
+candidate is checked against all baseline and proposal scenarios, even when the
+main report uses `--scenario`. Expected failure scenarios are preserved too.
+
+Add `--decision-provider jev` or the existing local Laya options to select among
+passing generated candidates. Without a provider, multiple passing alternatives
+remain available for review. One passing candidate is selected deterministically.
+Model preference never changes validation results.
+
+Optional `--generation-constraints constraints.json` restricts generated edits:
+
+```json
+{
+  "locked": [{"component": "Apps", "property": "instances"}],
+  "bounds": [{"component": "Api", "property": "connection_pool_size", "min": 10, "max": 40}]
+}
+```
+
+Locks and bounds refer to explicitly declared properties; bounds apply to proposed
+edit values. They do not replace scenario requirements. Recipes and field names
+live in `config/rules/generation.rules`; search limits and headroom factors live in
+`config/generation.json`. Defaults allow 10 candidates, three rounds, and eight edits
+per candidate. Custom config directories must include these files and the new entry
+in `rules.json`.
+
+This is a bounded search over supported numeric property edits. It does not invent
+missing workload measurements, increase declared throughput or connection limits,
+generate new topology, or guarantee an optimal design. Pool wait time, retention
+memory costs, and real provisioning costs still require measurement. Unsupported
+failures return no candidates; unsuccessful alternatives remain visible in the report.
 
 ### Optional decision-model recommendations (Jev or local Laya)
 

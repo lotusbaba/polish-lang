@@ -14,3 +14,7 @@ dist/
 
 .models/
 .venv-laya/
+
+editor-ui/node_modules/
+editor-ui/test-results/
+editor-ui/playwright-report/

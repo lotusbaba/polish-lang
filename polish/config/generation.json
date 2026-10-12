@@ -1,0 +1,6 @@
+{
+  "max_candidates": 10,
+  "max_rounds": 3,
+  "max_edits": 8,
+  "headroom_factors": [1.0, 1.25]
+}

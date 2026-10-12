@@ -1,0 +1,53 @@
+# Candidate recipes consume simulation evidence. They never alter workloads or assertions.
+# Headroom is a search alternative, not a prediction or a measured capacity claim.
+def propose(arch, report, settings):
+    proposals = []
+    for comparison in report['comparisons']:
+        result = comparison['after']
+        if result['passed']:
+            continue
+        for record in result.get('capacity', []):
+            node = arch.nodes.get(record['resource'])
+            if not node or node.kind != 'compute_pool' or not record.get('overloaded') or not record.get('horizontal_scaling'):
+                continue
+            current = node.properties.get('instances')
+            if type(current) is not int and not isinstance(current, tuple):
+                continue
+            for factor in settings['headroom_factors']:
+                count = math.ceil(record['required_instances'] * factor)
+                value = (max(current[0], count), max(current[1], count)) if isinstance(current, tuple) else max(current, count)
+                proposals.append([dict(component=node.name, property='instances', value=value,
+                    reason='Increase instances using the reported CPU requirement; recheck memory and downstream connections.')])
+        for record in result.get('budgets', []):
+            if not record.get('overloaded'):
+                continue
+            if record['kind'] == 'retention_messages':
+                node = arch.nodes.get(record['resource'])
+                if node:
+                    for factor in settings['headroom_factors']:
+                        proposals.append([dict(component=node.name, property='retention_messages',
+                            value=math.ceil(record['demand'] * factor),
+                            reason='Cover the declared consumer lag; the memory cost of added retention still needs measurement.')])
+            if record['kind'] == 'connections':
+                # Match the database by its role-specific budget identity, without splitting names.
+                databases = [node for node in arch.nodes.values() if node.kind == 'database' and record['resource'] in (node.name + ':primary', node.name + ':replica')]
+                for database in databases:
+                    services = {}
+                    for edge in arch.edges:
+                        target = arch.nodes[edge.target]
+                        if edge.kind not in ('reads', 'writes') or (target.name != database.name and target.parent != database.name):
+                            continue
+                        source = arch.nodes[edge.source]
+                        service = source if source.kind == 'service' else arch.nodes.get(source.parent)
+                        if service and type(service.properties.get('connection_pool_size')) is int:
+                            services[service.name] = service
+                    for factor in settings['headroom_factors']:
+                        edits = []
+                        for service in services.values():
+                            size = int(service.properties['connection_pool_size'] * record['available_per_instance'] / record['potential_per_instance'] / factor)
+                            if size >= 1:
+                                edits.append(dict(component=service.name, property='connection_pool_size', value=size,
+                                    reason='Reduce aggregate pool pressure; validate application concurrency and pool wait time separately.'))
+                        if edits:
+                            proposals.append(edits)
+    return proposals

@@ -6,8 +6,11 @@ pass **all** requirements from both the baseline and proposed specifications.
 A model recommendation cannot turn a failing proposal into a passing plan. No edits
 are applied, and scenario expectations are never changed by this feature.
 
-The current implementation ranks authored candidate changes; it does not generate
-new patches, infer deployment facts, measure costs, or replace configured rule hooks.
+Use `--candidates` to rank authored changes, or `--generate-candidates NEW_DIRECTORY`
+to generate bounded numeric remedies from simulation failures. Generation recipes
+cover CPU instances, database pools, and broadcast retention, including combined
+fixes when downstream failures emerge. See [automatic generation](../../README.md#automatic-candidate-generation).
+Neither mode infers deployment facts or measures costs.
 Existing `decisions.json` suggestions remain available without model calls. One
 eligible candidate is selected deterministically; zero eligible candidates stop
 recommendation selection. Two or more eligible candidates require one model call.

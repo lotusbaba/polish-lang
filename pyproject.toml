@@ -28,7 +28,7 @@ polish = "polish.cli:main"
 include = ["polish", "polish.*"]
 
 [tool.setuptools.package-data]
-polish = ["grammar.lark", "config/*.json", "config/rules/*.rules", "config/vendors/*/*.json"]
+polish = ["grammar.lark", "config/*.json", "config/rules/*.rules", "config/vendors/*/*.json", "editor_static/*", "editor_static/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
