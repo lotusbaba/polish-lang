@@ -8,7 +8,7 @@ Polish is a declarative architecture language for people and LLMs. Describe
 pages, services, data stores, and infrastructure in a `.polishd` file, check
 their relationships, then run request scenarios against the resulting graph.
 
-This repository contains version 0.15: a Python compiler and
+This repository contains version 0.15.1: a Python compiler and
 deterministic functional simulator. It does not provision infrastructure or
 send real network requests.
 
@@ -28,7 +28,14 @@ pane stays beside the canvas:
 - **Simulate** runs the file's scenarios and shows their results and traces.
 - **Save file** writes to the file supplied on the command line, rejecting saves
   if another editor has changed it on disk.
-- **Fit canvas** and **Auto-arrange** help navigate larger architectures.
+- **Layout** offers Balanced, Left to right, and Top to bottom arrangements.
+  Large Balanced diagrams wrap components and their children into compact blocks.
+- Diagrams with more than 24 components open at a readable zoom centered on a
+  central component. **Jump to** navigates to any component at 85% zoom.
+- **Fit canvas** shows the entire architecture; **Readable zoom** returns to a
+  legible detail view. **Hide source** gives the diagram more screen space.
+- **Auto-arrange** recomputes positions using the selected layout. Layout changes
+  affect only the diagram, not the specification or its relationships.
 
 Use Excalidraw's drawing tools, annotations, undo/redo, library, and menu to save
 `.excalidraw` scenes or export PNG/SVG images. Diagram layout and annotations are

@@ -48,8 +48,9 @@ test('renders architecture, simulates, validates, and saves its source', async (
 test('editing a canvas label updates the specification and saves the rename', async ({ page }) => {
   await page.goto(url);
   await expect(page.getByRole('status')).toContainText('components');
-  // The fixed viewport and fit-to-viewport place API in the left column.
-  await page.mouse.dblclick(645, 360);
+  // Center the component using the same navigation control available to users.
+  await page.getByLabel('Jump to component').selectOption('API');
+  await page.mouse.dblclick(905, 547);
   const label = page.locator('textarea.excalidraw-wysiwyg');
   await expect(label).toBeVisible();
   await label.fill('Catalog\nservice');

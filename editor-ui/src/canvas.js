@@ -11,7 +11,7 @@ export function canvasModel(elements, graph) {
   graph.nodes.filter(n => n.parent).forEach((node, i) => {
     if (!byId.has(`polish:${node.name}`) || !byId.has(`polish:${node.parent}`)) return;
     const arrow = byId.get(`polish-edge:${graph.edges.length + i}`);
-    if (!arrow || arrow.startBinding?.elementId !== `polish:${node.parent}` || arrow.endBinding?.elementId !== `polish:${node.name}` || label(arrow) !== 'contains') {
+    if (!arrow || arrow.startBinding?.elementId !== `polish:${node.parent}` || arrow.endBinding?.elementId !== `polish:${node.name}` || !['', 'contains'].includes(label(arrow))) {
       throw new Error('Edit containment in the source pane. Use Check & draw to restore the containment arrows.');
     }
   });
